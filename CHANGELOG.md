@@ -2,6 +2,21 @@
 
 Toàn bộ các thay đổi của dự án **VNCare Phiên Địa Chỉ 2 Cấp** được ghi nhận tại đây theo chuẩn [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.1.0] - 2026-09-23
+
+### Cải tiến & Định dạng
+- **Định dạng file Excel xuất chuẩn hóa theo yêu cầu:**
+  - Áp dụng font **Times New Roman**, cỡ chữ **13pt** cho toàn bộ dữ liệu.
+  - Kẻ ô viền (borders) đầy đủ cho tất cả các ô trong bảng.
+  - Tự động giãn dòng và căn chỉnh độ rộng cột theo nội dung (text wrap & auto column width).
+  - Giữ nguyên giao diện, bố cục và toàn bộ các sheet của file mẫu nạp.
+- **Giao diện & Font chữ Web:**
+  - Tích hợp bộ font chữ tiếng Việt cao cấp **Be Vietnam Pro** cho toàn bộ giao diện web, cải thiện thẩm mỹ và tính chuyên nghiệp.
+- **Bảo mật truy cập (Lock Screen):**
+  - Tích hợp màn hình khóa bảo vệ với cơ chế mã băm bảo mật SHA-256 (hỗ trợ nhập chữ hoa, chữ thường hoặc không dấu linh hoạt).
+- **Đóng gói Offline:**
+  - Cập nhật bản chạy offline Single-file HTML `releases/vncare-diachi-web-v1.1.0-offline.html`.
+
 ## [1.0.0] - 2026-09-23
 
 ### Khởi tạo

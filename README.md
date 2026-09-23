@@ -4,13 +4,13 @@
 
 | | |
 |---|---|
-| **Phiên bản** | `1.0.0` |
+| **Phiên bản** | `1.1.0` |
 | **Ngày phát hành** | 2026-09-23 |
 | **Tác giả** | [Nguyễn Sơn Nam (Nsnnam)](https://github.com/Nsnnam) |
 | **Múi giờ** | GMT+7 (`Asia/Ho_Chi_Minh`) |
 | **Kho mã nguồn** | [https://github.com/Nsnnam/vncare-diachi-web](https://github.com/Nsnnam/vncare-diachi-web) |
 | **Trang trực tuyến (Live)** | [https://nsnnam.github.io/vncare-diachi-web/](https://nsnnam.github.io/vncare-diachi-web/) |
-| **Bản chạy Offline 100%** | `releases/vncare-diachi-web-v1.0.0-offline.html` (Mở trực tiếp trên mọi trình duyệt) |
+| **Bản chạy Offline 100%** | `releases/vncare-diachi-web-v1.1.0-offline.html` (Mở trực tiếp trên mọi trình duyệt) |
 | **Giấy phép** | MIT (Public Open-Source) |
 
 ---

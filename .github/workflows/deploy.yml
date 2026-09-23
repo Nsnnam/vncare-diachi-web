@@ -46,7 +46,7 @@ jobs:
       - name: Copy single file to dist
         run: |
           mkdir -p dist/releases
-          cp releases/vncare-diachi-web-v1.0.0-offline.html dist/releases/
+          cp releases/vncare-diachi-web-v1.1.0-offline.html dist/releases/
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

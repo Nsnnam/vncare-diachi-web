@@ -1,6 +1,6 @@
 {
   "name": "vncare-diachi-web",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": false,
   "type": "module",
   "description": "Ứng dụng tự động phiên địa chỉ 2 cấp & 3 cấp sang chuẩn VNCare từ file Excel (Offline-first & GitHub Pages)",
@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "build:single": "tsc && vite build --config vite.singlefile.config.ts && node -e \"const fs=require('fs'); fs.copyFileSync('releases/index.html', 'releases/vncare-diachi-web-v1.0.0-offline.html');\"",
+    "build:single": "tsc && vite build --config vite.singlefile.config.ts && node -e \"const fs=require('fs'); fs.copyFileSync('releases/index.html', 'releases/vncare-diachi-web-v1.1.0-offline.html');\"",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -18,7 +18,8 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwind-merge": "^2.5.4",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
+    "xlsx-js-style": "^1.2.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",

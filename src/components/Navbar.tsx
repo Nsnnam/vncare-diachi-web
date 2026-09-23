@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, BookOpen, Coffee, FileSpreadsheet, Library, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { MapPin, BookOpen, Coffee, FileSpreadsheet, Library, ShieldCheck, Lock } from 'lucide-react';
 import { APP_META } from '../constants/meta';
 
 interface NavbarProps {
@@ -7,6 +7,7 @@ interface NavbarProps {
   setActiveTab: (tab: 'process' | 'dictionary' | 'guide') => void;
   openAboutModal: () => void;
   customRulesCount: number;
+  onLock: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -14,6 +15,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActiveTab,
   openAboutModal,
   customRulesCount,
+  onLock,
 }) => {
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
@@ -44,7 +46,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <nav className="flex items-center space-x-1 sm:space-x-2">
             <button
               onClick={() => setActiveTab('process')}
-              className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                 activeTab === 'process'
                   ? 'bg-sky-50 text-sky-700 font-semibold shadow-xs'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -56,7 +58,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={() => setActiveTab('dictionary')}
-              className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative ${
+              className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors relative cursor-pointer ${
                 activeTab === 'dictionary'
                   ? 'bg-sky-50 text-sky-700 font-semibold shadow-xs'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -73,7 +75,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={() => setActiveTab('guide')}
-              className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
                 activeTab === 'guide'
                   ? 'bg-sky-50 text-sky-700 font-semibold shadow-xs'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -85,11 +87,20 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={openAboutModal}
-              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors ml-1"
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors ml-1 cursor-pointer"
               title="Thông tin tác giả & Mời cà phê"
             >
               <Coffee className="w-4 h-4 text-amber-600" />
               <span className="hidden md:inline font-semibold">Tác giả & ☕</span>
+            </button>
+
+            {/* Lock button */}
+            <button
+              onClick={onLock}
+              className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer ml-1"
+              title="Khóa màn hình bảo vệ"
+            >
+              <Lock className="w-4 h-4" />
             </button>
           </nav>
         </div>

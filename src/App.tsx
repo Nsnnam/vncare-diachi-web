@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { AboutModal } from './components/AboutModal';
+import { LockScreenModal, ACCESS_AUTH_KEY, ACCESS_AUTH_HASH } from './components/LockScreenModal';
 import { ExcelProcessorTab } from './components/ExcelProcessorTab';
 import { CustomDictionaryTab } from './components/CustomDictionaryTab';
 import { GuideTab } from './components/GuideTab';
@@ -12,6 +13,11 @@ export const App: React.FC = () => {
   const [aboutModalOpen, setAboutModalOpen] = useState<boolean>(false);
   const [customRulesCount, setCustomRulesCount] = useState<number>(0);
 
+  // Authentication Lock Screen State
+  const [isLocked, setIsLocked] = useState<boolean>(() => {
+    return localStorage.getItem(ACCESS_AUTH_KEY) !== ACCESS_AUTH_HASH;
+  });
+
   const refreshRulesCount = () => {
     setCustomRulesCount(getCustomDictRules().length);
   };
@@ -19,6 +25,15 @@ export const App: React.FC = () => {
   useEffect(() => {
     refreshRulesCount();
   }, []);
+
+  const handleUnlock = () => {
+    setIsLocked(false);
+  };
+
+  const handleLock = () => {
+    localStorage.removeItem(ACCESS_AUTH_KEY);
+    setIsLocked(true);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-sans">
@@ -28,6 +43,7 @@ export const App: React.FC = () => {
         setActiveTab={setActiveTab}
         openAboutModal={() => setAboutModalOpen(true)}
         customRulesCount={customRulesCount}
+        onLock={handleLock}
       />
 
       {/* Main Container */}
@@ -48,6 +64,12 @@ export const App: React.FC = () => {
       <AboutModal
         isOpen={aboutModalOpen}
         onClose={() => setAboutModalOpen(false)}
+      />
+
+      {/* Access Lock Screen Modal */}
+      <LockScreenModal
+        isOpen={isLocked}
+        onUnlock={handleUnlock}
       />
     </div>
   );

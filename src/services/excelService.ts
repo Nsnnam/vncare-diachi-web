@@ -1,10 +1,10 @@
-import * as XLSX from 'xlsx';
-import { ColumnMapping, ProcessedRow, ProcessingMode, ResolveResult } from '../types';
+import * as XLSX from 'xlsx-js-style';
+import { ColumnMapping, ProcessedRow, ProcessingMode } from '../types';
 import { normalizeText, resolveAddress } from './addressEngine';
 import { getCustomDictRules } from './customDictService';
 
 export interface ParsedWorkbookData {
-  workbook: XLSX.WorkBook;
+  workbook: any;
   fileName: string;
   sheetNames: string[];
   activeSheet: string;
@@ -13,6 +13,120 @@ export interface ParsedWorkbookData {
   dataRows: any[][];
   columnMapping: ColumnMapping;
   isVncareTemplate: boolean;
+}
+
+/** Standard Styling Constants conforming to User Specification */
+const BORDER_ALL_THIN = {
+  top: { style: 'thin', color: { rgb: '000000' } },
+  bottom: { style: 'thin', color: { rgb: '000000' } },
+  left: { style: 'thin', color: { rgb: '000000' } },
+  right: { style: 'thin', color: { rgb: '000000' } },
+};
+
+const FONT_HEADER = {
+  name: 'Times New Roman',
+  sz: 13,
+  bold: true,
+  color: { rgb: '000000' },
+};
+
+const FONT_DATA = {
+  name: 'Times New Roman',
+  sz: 13,
+  bold: false,
+  color: { rgb: '000000' },
+};
+
+/** Calculate auto-fit column widths */
+function autoFitColumns(sheetData: any[][]): Array<{ wch: number }> {
+  if (!sheetData || sheetData.length === 0) return [];
+  const colCount = Math.max(...sheetData.map((r) => (r ? r.length : 0)));
+  const cols: Array<{ wch: number }> = [];
+
+  for (let c = 0; c < colCount; c++) {
+    let maxLen = 8;
+    for (let r = 0; r < sheetData.length; r++) {
+      const val = sheetData[r] ? sheetData[r][c] : '';
+      if (val !== undefined && val !== null) {
+        const str = String(val);
+        const lines = str.split('\n');
+        for (const l of lines) {
+          const lLen = l.trim().length;
+          if (lLen > maxLen) maxLen = lLen;
+        }
+      }
+    }
+    cols.push({ wch: Math.min(65, Math.max(8, maxLen + 3)) });
+  }
+  return cols;
+}
+
+/** Calculate auto-fit row heights ("giãn dòng theo nội dung") */
+function autoFitRows(sheetData: any[][], headerRowIndex: number): Array<{ hpt: number }> {
+  return sheetData.map((r, rIdx) => {
+    if (rIdx === headerRowIndex) {
+      return { hpt: 36 };
+    }
+    let lineCount = 1;
+    if (r) {
+      for (const cellVal of r) {
+        const s = String(cellVal || '');
+        const nLines = s.split('\n').length;
+        if (nLines > lineCount) lineCount = nLines;
+        if (s.length > 45 && lineCount < 2) lineCount = 2;
+        if (s.length > 90 && lineCount < 3) lineCount = 3;
+      }
+    }
+    return { hpt: Math.max(26, lineCount * 22) };
+  });
+}
+
+/** Apply Times New Roman 13pt, Borders and WrapText to all cells in Worksheet */
+function applyTimesNewRomanStyles(
+  worksheet: any,
+  sheetData: any[][],
+  headerRowIndex: number,
+  centerColumns: number[] = [0, 2, 3, 8, 9, 14]
+): void {
+  const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:A1');
+
+  for (let r = range.s.r; r <= range.e.r; r++) {
+    const isHeader = r === headerRowIndex;
+
+    for (let c = range.s.c; c <= range.e.c; c++) {
+      const cellRef = XLSX.utils.encode_cell({ r, c });
+      let cell = worksheet[cellRef];
+      if (!cell) {
+        // Create empty cell so border is still drawn
+        cell = { t: 's', v: '' };
+        worksheet[cellRef] = cell;
+      }
+
+      const shouldCenter = centerColumns.includes(c);
+
+      cell.s = {
+        font: isHeader ? FONT_HEADER : FONT_DATA,
+        border: BORDER_ALL_THIN,
+        alignment: {
+          vertical: 'center',
+          horizontal: isHeader || shouldCenter ? 'center' : 'left',
+          wrapText: true,
+        },
+        ...(isHeader
+          ? {
+              fill: {
+                patternType: 'solid',
+                fgColor: { rgb: 'D9E1F2' }, // Standard soft hospital blue header
+              },
+            }
+          : {}),
+      };
+    }
+  }
+
+  // Set auto columns & rows
+  worksheet['!cols'] = autoFitColumns(sheetData);
+  worksheet['!rows'] = autoFitRows(sheetData, headerRowIndex);
 }
 
 /** Detect if string matches address keywords */
@@ -27,7 +141,6 @@ function isAddressHeader(header: string): boolean {
   );
 }
 
-/** Detect if string matches province keywords */
 function isTinhHeader(header: string): boolean {
   const norm = normalizeText(header);
   return (
@@ -39,7 +152,6 @@ function isTinhHeader(header: string): boolean {
   );
 }
 
-/** Detect if string matches commune keywords */
 function isXaHeader(header: string): boolean {
   const norm = normalizeText(header);
   return (
@@ -52,16 +164,24 @@ function isXaHeader(header: string): boolean {
 }
 
 /** Auto-detect header row and column mapping */
-export function detectColumns(rows: any[][]): { headerRowIndex: number; headers: string[]; mapping: ColumnMapping; isVncare: boolean } {
+export function detectColumns(rows: any[][]): {
+  headerRowIndex: number;
+  headers: string[];
+  mapping: ColumnMapping;
+  isVncare: boolean;
+} {
   let headerRowIndex = 0;
   let headers: string[] = [];
 
-  // Find header row: row that contains "DIACHI" or "STT" or "HỌ TÊN"
   for (let r = 0; r < Math.min(10, rows.length); r++) {
     const row = rows[r];
     if (!row) continue;
     const rowStr = row.map((c) => String(c || '').toLowerCase()).join(' ');
-    if (rowStr.includes('diachi') || rowStr.includes('địa chỉ') || (rowStr.includes('stt') && (rowStr.includes('tên') || rowStr.includes('ten')))) {
+    if (
+      rowStr.includes('diachi') ||
+      rowStr.includes('địa chỉ') ||
+      (rowStr.includes('stt') && (rowStr.includes('tên') || rowStr.includes('ten')))
+    ) {
       headerRowIndex = r;
       headers = row.map((c) => String(c || '').trim());
       break;
@@ -92,16 +212,28 @@ export function detectColumns(rows: any[][]): { headerRowIndex: number; headers:
     if (mapping.tinhCol === -1 && isTinhHeader(h)) mapping.tinhCol = idx;
     if (mapping.xaCol === -1 && isXaHeader(h)) mapping.xaCol = idx;
 
-    if (mapping.nameCol === -1 && (norm.includes('ten') || norm.includes('ho ten') || norm.includes('ho va ten') || norm.includes('nguoi benh'))) {
+    if (
+      mapping.nameCol === -1 &&
+      (norm.includes('ten') || norm.includes('ho ten') || norm.includes('ho va ten') || norm.includes('nguoi benh'))
+    ) {
       mapping.nameCol = idx;
     }
-    if (mapping.dobCol === -1 && (norm.includes('ngaysinh') || norm.includes('ngay sinh') || norm.includes('nam sinh'))) {
+    if (
+      mapping.dobCol === -1 &&
+      (norm.includes('ngaysinh') || norm.includes('ngay sinh') || norm.includes('nam sinh'))
+    ) {
       mapping.dobCol = idx;
     }
-    if (mapping.genderCol === -1 && (norm.includes('gioitinh') || norm.includes('gioi tinh') || norm.includes('phai'))) {
+    if (
+      mapping.genderCol === -1 &&
+      (norm.includes('gioitinh') || norm.includes('gioi tinh') || norm.includes('phai'))
+    ) {
       mapping.genderCol = idx;
     }
-    if (mapping.cccdCol === -1 && (norm.includes('cccd') || norm.includes('cmnd') || norm.includes('can cuoc'))) {
+    if (
+      mapping.cccdCol === -1 &&
+      (norm.includes('cccd') || norm.includes('cmnd') || norm.includes('can cuoc'))
+    ) {
       mapping.cccdCol = idx;
     }
     if (mapping.cccdDateCol === -1 && (norm.includes('ngaycap') || norm.includes('ngay cap'))) {
@@ -110,34 +242,44 @@ export function detectColumns(rows: any[][]): { headerRowIndex: number; headers:
     if (mapping.cccdPlaceCol === -1 && (norm.includes('noicap') || norm.includes('noi cap'))) {
       mapping.cccdPlaceCol = idx;
     }
-    if (mapping.workplaceCol === -1 && (norm.includes('noilamviec') || norm.includes('noi lam viec') || norm.includes('cong ty') || norm.includes('don vi'))) {
+    if (
+      mapping.workplaceCol === -1 &&
+      (norm.includes('noilamviec') || norm.includes('noi lam viec') || norm.includes('cong ty') || norm.includes('don vi'))
+    ) {
       mapping.workplaceCol = idx;
     }
-    if (mapping.phoneCol === -1 && (norm.includes('sdt') || norm.includes('dien thoai') || norm.includes('phone'))) {
+    if (
+      mapping.phoneCol === -1 &&
+      (norm.includes('sdt') || norm.includes('dien thoai') || norm.includes('phone'))
+    ) {
       mapping.phoneCol = idx;
     }
   });
 
-  // Check if standard VNCare template structure (Col 11 TINH, Col 12 XA, Col 13 DIACHI)
   const isVncare =
     headers.some((h) => h.includes('TENBENHNHAN')) &&
     headers.some((h) => h.includes('DIACHI')) &&
     headers.some((h) => h.includes('TINH'));
 
   if (isVncare) {
-    // Exact standard VNCare column indices:
-    // L: 11 (TINH), M: 12 (XA), N: 13 (DIACHI)
     if (headers[11] && headers[11].includes('TINH')) mapping.tinhCol = 11;
     if (headers[12] && headers[12].includes('XA')) mapping.xaCol = 12;
     if (headers[13] && headers[13].includes('DIACHI')) mapping.addressCol = 13;
   }
 
-  // Fallback if addressCol not found: inspect first 5 rows to see which column has address-like strings
   if (mapping.addressCol === -1 && rows.length > headerRowIndex + 1) {
     const sampleRow = rows[headerRowIndex + 1] || [];
     for (let c = 0; c < sampleRow.length; c++) {
       const val = String(sampleRow[c] || '');
-      if (val.length > 10 && (val.includes(',') || val.includes('tỉnh') || val.includes('xã') || val.includes('phường') || val.includes('Phú Thọ') || val.includes('Hà Nội'))) {
+      if (
+        val.length > 10 &&
+        (val.includes(',') ||
+          val.includes('tỉnh') ||
+          val.includes('xã') ||
+          val.includes('phường') ||
+          val.includes('Phú Thọ') ||
+          val.includes('Hà Nội'))
+      ) {
         mapping.addressCol = c;
         break;
       }
@@ -153,14 +295,15 @@ export async function readWorkbook(file: File): Promise<ParsedWorkbookData> {
   const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
 
   const sheetNames = workbook.SheetNames || [];
-  // Default to DANHSACH if exists, else first sheet
   const activeSheet = sheetNames.includes('DANHSACH') ? 'DANHSACH' : sheetNames[0];
 
   const worksheet = workbook.Sheets[activeSheet];
   const rows: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
 
   const { headerRowIndex, headers, mapping, isVncare } = detectColumns(rows);
-  const dataRows = rows.slice(headerRowIndex + 1).filter((r) => r && r.some((c) => c !== '' && c !== null && c !== undefined));
+  const dataRows = rows
+    .slice(headerRowIndex + 1)
+    .filter((r) => r && r.some((c) => c !== '' && c !== null && c !== undefined));
 
   return {
     workbook,
@@ -181,7 +324,9 @@ export function switchSheet(wbData: ParsedWorkbookData, newSheetName: string): P
   const rows: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
 
   const { headerRowIndex, headers, mapping, isVncare } = detectColumns(rows);
-  const dataRows = rows.slice(headerRowIndex + 1).filter((r) => r && r.some((c) => c !== '' && c !== null && c !== undefined));
+  const dataRows = rows
+    .slice(headerRowIndex + 1)
+    .filter((r) => r && r.some((c) => c !== '' && c !== null && c !== undefined));
 
   return {
     ...wbData,
@@ -250,14 +395,11 @@ export function formatDate(val: any): string {
     return `${d}/${m}/${y}`;
   }
   const s = String(val).trim();
-  // If already DD/MM/YYYY
   if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) return s;
-  // If YYYY-MM-DD
   const m = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
   if (m) {
     return `${String(m[3]).padStart(2, '0')}/${String(m[2]).padStart(2, '0')}/${m[1]}`;
   }
-  // If only year (e.g. 1978) -> 01/01/1978 or keep year
   if (/^\d{4}$/.test(s)) {
     return `01/01/${s}`;
   }
@@ -273,22 +415,18 @@ export function formatGender(val: any): string {
   return String(val);
 }
 
-/** Generate Export File for Mode 1 (In-place fill) */
+/** Generate Export File for Mode 1 (In-place fill with Times New Roman 13, Borders, Auto-fit) */
 export function exportInplaceFile(
   wbData: ParsedWorkbookData,
   processedRows: ProcessedRow[]
 ): Uint8Array {
-  // Deep clone workbook
   const originalWb = wbData.workbook;
   const sheet = originalWb.Sheets[wbData.activeSheet];
-
-  // We read the full 2D sheet
   const sheetData: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
 
   let tinhCol = wbData.columnMapping.tinhCol;
   let xaCol = wbData.columnMapping.xaCol;
 
-  // If columns don't exist in sheet, append them at the end
   if (tinhCol === undefined || tinhCol === -1 || xaCol === undefined || xaCol === -1) {
     const headerRow = sheetData[wbData.headerRowIndex] || [];
     tinhCol = headerRow.length;
@@ -314,14 +452,22 @@ export function exportInplaceFile(
 
   // Re-encode worksheet
   const newSheet = XLSX.utils.aoa_to_sheet(sheetData);
+
+  // Apply Times New Roman 13, Borders, Auto-fit rows and columns
+  applyTimesNewRomanStyles(newSheet, sheetData, wbData.headerRowIndex, [
+    0,
+    wbData.columnMapping.dobCol ?? -1,
+    wbData.columnMapping.genderCol ?? -1,
+    wbData.columnMapping.cccdCol ?? -1,
+  ]);
+
   originalWb.Sheets[wbData.activeSheet] = newSheet;
 
-  // Export array buffer
   const out = XLSX.write(originalWb, { bookType: 'xlsx', type: 'array' });
   return new Uint8Array(out);
 }
 
-/** Generate Export File for Mode 2 (Convert to VNCare 7-Sheet Template) */
+/** Generate Export File for Mode 2 (Convert to VNCare 7-Sheet Template with Times New Roman 13, Borders) */
 export async function exportVncareTemplateFile(
   processedRows: ProcessedRow[],
   mapping: ColumnMapping,
@@ -336,72 +482,43 @@ export async function exportVncareTemplateFile(
   const defaultJob = options.defaultJob || '6-Công nhân';
   const defaultEthnicity = options.defaultEthnicity || '25-Kinh';
 
-  // Load the built-in VNCare template from public/template/
-  let templateWb: XLSX.WorkBook;
+  let templateWb: any;
   try {
     const res = await fetch('template/MauFileImportBenhNhan_ksktoandan.xls');
     if (!res.ok) throw new Error('Fetch template failed');
     const buf = await res.arrayBuffer();
     templateWb = XLSX.read(buf, { type: 'array' });
   } catch (e) {
-    // If running offline / singlefile, create template workbook structure in-memory
     templateWb = XLSX.utils.book_new();
-    const dsSheet = XLSX.utils.aoa_to_sheet([
-      [
-        'STT',
-        'TENBENHNHAN\n(Bắt buộc)',
-        'NGAYSINH\n(Bắt buộc)',
-        'GIOITINH\n(Bắt buộc)',
-        'NGHENGHIEP\n(Bắt buộc)',
-        'NOILAMVIEC',
-        'DANTOC\n(Bắt buộc)',
-        'QUOCGIA\n(Bắt buộc)',
-        'CCCD\n(Bắt buộc)',
-        'NGAYCAPCCCD\n(Bắt buộc)',
-        'NOICAPCCCD\n(Bắt buộc)',
-        'TINH\n(Bắt buộc)',
-        'XA\n(Bắt buộc)',
-        'DIACHI\n(Bắt buộc)',
-        'DOTKHAM\n(Bắt buộc)',
-        'SDTBENHNHAN',
-        'TENNGUOITHAN',
-        'MA_BHYT',
-        'BHYT_BD',
-        'BHYT_KT',
-        'MA_KCBBD',
-        'DIACHI_BHYT'
-      ]
-    ]);
-    XLSX.utils.book_append_sheet(templateWb, dsSheet, 'DANHSACH');
   }
 
-  // Populate DANHSACH sheet
-  const rowsAoa: any[][] = [
-    [
-      'STT',
-      'TENBENHNHAN\n(Bắt buộc)',
-      'NGAYSINH\n(Bắt buộc)',
-      'GIOITINH\n(Bắt buộc)',
-      'NGHENGHIEP\n(Bắt buộc)',
-      'NOILAMVIEC',
-      'DANTOC\n(Bắt buộc)',
-      'QUOCGIA\n(Bắt buộc)',
-      'CCCD\n(Bắt buộc)',
-      'NGAYCAPCCCD\n(Bắt buộc)',
-      'NOICAPCCCD\n(Bắt buộc)',
-      'TINH\n(Bắt buộc)',
-      'XA\n(Bắt buộc)',
-      'DIACHI\n(Bắt buộc)',
-      'DOTKHAM\n(Bắt buộc)',
-      'SDTBENHNHAN',
-      'TENNGUOITHAN',
-      'MA_BHYT',
-      'BHYT_BD',
-      'BHYT_KT',
-      'MA_KCBBD',
-      'DIACHI_BHYT'
-    ]
+  // Headers for DANHSACH sheet
+  const headers = [
+    'STT',
+    'TENBENHNHAN\n(Bắt buộc)',
+    'NGAYSINH\n(Bắt buộc)',
+    'GIOITINH\n(Bắt buộc)',
+    'NGHENGHIEP\n(Bắt buộc)',
+    'NOILAMVIEC',
+    'DANTOC\n(Bắt buộc)',
+    'QUOCGIA\n(Bắt buộc)',
+    'CCCD\n(Bắt buộc)',
+    'NGAYCAPCCCD\n(Bắt buộc)',
+    'NOICAPCCCD\n(Bắt buộc)',
+    'TINH\n(Bắt buộc)',
+    'XA\n(Bắt buộc)',
+    'DIACHI\n(Bắt buộc)',
+    'DOTKHAM\n(Bắt buộc)',
+    'SDTBENHNHAN',
+    'TENNGUOITHAN',
+    'MA_BHYT',
+    'BHYT_BD',
+    'BHYT_KT',
+    'MA_KCBBD',
+    'DIACHI_BHYT',
   ];
+
+  const rowsAoa: any[][] = [headers];
 
   processedRows.forEach((pr, i) => {
     const orig = pr.originalRowData || [];
@@ -457,7 +574,14 @@ export async function exportVncareTemplateFile(
   });
 
   const newDsSheet = XLSX.utils.aoa_to_sheet(rowsAoa);
+
+  // Apply Times New Roman 13, Borders, Auto-fit rows and columns
+  applyTimesNewRomanStyles(newDsSheet, rowsAoa, 0, [0, 2, 3, 8, 9, 14]);
+
   templateWb.Sheets['DANHSACH'] = newDsSheet;
+  if (!templateWb.SheetNames.includes('DANHSACH')) {
+    templateWb.SheetNames.unshift('DANHSACH');
+  }
 
   const out = XLSX.write(templateWb, { bookType: 'xlsx', type: 'array' });
   return new Uint8Array(out);

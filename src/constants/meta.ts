@@ -1,7 +1,7 @@
 export const APP_META = {
   name: "VNCare Phiên Địa Chỉ 2 Cấp",
   appCode: "DIACHI",
-  version: "1.0.0",
+  version: "1.1.0",
   releaseDate: "2026-09-23",
   author: "Nguyễn Sơn Nam (Nsnnam / NamNS)",
   githubUrl: "https://github.com/Nsnnam/vncare-diachi-web",
@@ -19,6 +19,17 @@ export const APP_META = {
     qrPath: "coffee-qr.jpg",
   },
   changelog: [
+    {
+      version: "1.1.0",
+      date: "2026-09-23",
+      highlights: [
+        "Chuẩn hóa toàn diện định dạng file Excel đầu ra: Font Times New Roman 13pt, kẻ ô viền (borders) toàn bộ bảng, tự động giãn dòng và căn chỉnh độ rộng cột theo nội dung.",
+        "Thiết kế lại giao diện web với bộ font tiếng Việt chuyên nghiệp Be Vietnam Pro.",
+        "Tích hợp màn hình khóa bảo mật (Lock Screen) xác thực mã băm SHA-256 nội bộ, hỗ trợ nhập linh hoạt chữ hoa/thường/không dấu.",
+        "Nâng cấp bộ engine xuất Excel bằng xlsx-js-style giữ nguyên 100% định dạng, cấu trúc và các sheet mẫu VNCare.",
+        "Cập nhật bản đóng gói chạy offline Single HTML độc lập."
+      ]
+    },
     {
       version: "1.0.0",
       date: "2026-09-23",

@@ -2,6 +2,24 @@
 
 Toàn bộ các thay đổi của dự án **VNCare Phiên Địa Chỉ 2 Cấp** được ghi nhận tại đây theo chuẩn [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.2.0] - 2026-09-27
+
+### Nâng cấp & Chuẩn hóa Nghiệp vụ Y tế VNCare
+- **Cột STT (Số thứ tự):** Bắt buộc đánh số thứ tự liên tục từ 1 đến hết cho toàn bộ các dòng dữ liệu có nội dung.
+- **Ràng buộc các cột bắt buộc:**
+  - Đảm bảo bắt buộc điền đầy đủ tất cả các trường: `STT`, `Tên bệnh nhân`, `Ngày sinh`, `Giới tính`, `Nghề nghiệp`, `Dân tộc`, `Quốc gia`, `Tỉnh`, `Xã`, `Địa chỉ`, `CCCD`.
+  - Toàn bộ ô dữ liệu được định dạng kiểu **Text General (`@`)**, bảo toàn tuyệt đối các số 0 đứng đầu của CCCD, mã tỉnh/xã và số điện thoại, ngăn chặn việc Excel tự động ép kiểu làm sai lệch dữ liệu.
+- **Chuẩn hóa Ngày sinh & Ngày cấp CCCD:**
+  - Bắt buộc đúng định dạng `DD/MM/YYYY`.
+  - Xử lý triệt để mã ngày serial của Excel (ví dụ `28795` -> `01/11/1978`, `44548` -> `18/12/2021`) và loại trừ hiện tượng sai lệch mili-giây do dấu phẩy động của Excel.
+- **Chuẩn hóa CCCD:**
+  - Kiểm tra và chuẩn hóa định dạng CCCD: 12 chữ số hoặc 8-11 ký tự alphanumeric (CMND 9 số / Hộ chiếu).
+  - Tự động bù số `0` ở đầu nếu file đầu vào bị mất do Excel lưu dạng số (ví dụ `26078001518` -> `026078001518`).
+- **Chuẩn hóa Đợt khám:**
+  - Bắt buộc đúng định dạng `YYYYMM` (mẫu: `202601`).
+- **Giao diện & Cảnh báo:**
+  - Bổ sung thanh ruy-băng kiểm tra chất lượng dữ liệu và bộ lọc "Cảnh báo bắt buộc" trên Bảng xem trước giúp nhân viên y tế rà soát nhanh các dòng còn thiếu trường bắt buộc.
+
 ## [1.1.0] - 2026-09-23
 
 ### Cải tiến & Định dạng

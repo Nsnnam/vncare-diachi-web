@@ -53,22 +53,8 @@ export interface ResolveResult {
   confidence: number;
 }
 
-export interface ProcessedRow {
-  rowIndex: number; // 0-based index in data
-  stt?: number | string;
-  name?: string;
-  rawAddress: string;
-  resolvedTinh: string;
-  resolvedXa: string;
-  status: ResolveStatus;
-  method: string;
-  originalRowData: any[];
-  isManualOverride?: boolean;
-}
-
-export type ProcessingMode = 'inplace' | 'convert_to_vncare_template';
-
 export interface ColumnMapping {
+  sttCol?: number;
   addressCol: number;
   tinhCol?: number;
   xaCol?: number;
@@ -83,4 +69,35 @@ export interface ColumnMapping {
   jobCol?: number;
   ethnicityCol?: number;
   nationCol?: number;
+  dotKhamCol?: number;
 }
+
+export interface ProcessedRow {
+  rowIndex: number; // 0-based index in data
+  stt: number | string;
+  name: string;
+  dobFormatted: string;
+  isDobValid: boolean;
+  genderFormatted: string;
+  cccdFormatted: string;
+  isCccdValid: boolean;
+  cccdDateFormatted: string;
+  isCccdDateValid: boolean;
+  cccdPlaceFormatted: string;
+  jobFormatted: string;
+  workplaceFormatted: string;
+  ethnicityFormatted: string;
+  nationFormatted: string;
+  rawAddress: string;
+  resolvedTinh: string;
+  resolvedXa: string;
+  status: ResolveStatus;
+  method: string;
+  originalRowData: any[];
+  isManualOverride?: boolean;
+  isMissingMandatory: boolean;
+  missingFields: string[];
+}
+
+export type ProcessingMode = 'inplace' | 'convert_to_vncare_template';
+

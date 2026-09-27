@@ -1,8 +1,8 @@
 export const APP_META = {
   name: "VNCare Phiên Địa Chỉ 2 Cấp",
   appCode: "DIACHI",
-  version: "1.1.0",
-  releaseDate: "2026-09-23",
+  version: "1.2.0",
+  releaseDate: "2026-09-27",
   author: "Nguyễn Sơn Nam (Nsnnam / NamNS)",
   githubUrl: "https://github.com/Nsnnam/vncare-diachi-web",
   homeRepo: "Nsnnam/vncare-diachi-web",
@@ -19,6 +19,18 @@ export const APP_META = {
     qrPath: "coffee-qr.jpg",
   },
   changelog: [
+    {
+      version: "1.2.0",
+      date: "2026-09-27",
+      highlights: [
+        "Cột STT bắt buộc: tự động đánh số thứ tự liên tục từ 1 đến hết cho toàn bộ dòng dữ liệu có nội dung.",
+        "Đảm bảo bắt buộc điền đầy đủ và đúng định dạng Text General (@) cho tất cả các cột: STT, Tên bệnh nhân, Ngày sinh, Giới tính, Nghề nghiệp, Dân tộc, Quốc gia, Tỉnh, Xã, Địa chỉ, CCCD.",
+        "Cột Ngày sinh và Ngày cấp CCCD bắt buộc chuẩn hóa theo định dạng DD/MM/YYYY (xử lý chính xác mã ngày serial Excel và làm tròn hạn chế sai số float).",
+        "Cột CCCD chuẩn hóa theo định dạng 12 chữ số hoặc 8-11 ký tự alphanumeric (tự động khôi phục số 0 đứng đầu khi đọc dữ liệu dạng số).",
+        "Cột Đợt khám chuẩn hóa và xác thực nghiêm ngặt theo định dạng YYYYMM (mẫu: 202601).",
+        "Bổ sung thanh trạng thái kiểm tra tính hợp lệ dữ liệu và bộ lọc 'Cảnh báo bắt buộc' trực tiếp trên bảng xem trước."
+      ]
+    },
     {
       version: "1.1.0",
       date: "2026-09-23",

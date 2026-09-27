@@ -12,7 +12,11 @@ import {
   Layers,
   ArrowRight,
   FileCheck,
-  FileDown
+  FileDown,
+  ShieldCheck,
+  Calendar,
+  CreditCard,
+  Hash
 } from 'lucide-react';
 import { ColumnMapping, ProcessedRow, ProcessingMode } from '../types';
 import {
@@ -76,7 +80,6 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
       if (data.isVncareTemplate) {
         setMode('inplace');
       } else {
-        // If contract or custom file, default to convert mode if sheet has employee info
         setMode('inplace');
       }
     } catch (err: any) {
@@ -130,7 +133,10 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
     setLoading(true);
     setTimeout(() => {
       try {
-        const results = processAddressRows(wbData.dataRows, mapping);
+        const results = processAddressRows(wbData.dataRows, mapping, {
+          defaultJob,
+          defaultWorkplace,
+        });
         setProcessedRows(results);
         setIsProcessed(true);
       } catch (err: any) {
@@ -158,6 +164,10 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
         target.method = 'Chỉnh sửa trực tiếp';
         target.isManualOverride = true;
 
+        // Recalculate mandatory missing
+        target.missingFields = target.missingFields.filter((f) => f !== 'Tỉnh' && f !== 'Xã');
+        target.isMissingMandatory = target.missingFields.length > 0;
+
         if (saveToDict && target.rawAddress) {
           addOrUpdateCustomRule(target.rawAddress, tinhCode, xaCode, 'Sửa từ bảng');
           onCustomDictUpdated();
@@ -182,6 +192,7 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
     setProcessedRows((prev) => {
       return prev.map((r) => {
         if (r.rawAddress.trim().toLowerCase() === rawAddress.trim().toLowerCase()) {
+          const newMissing = r.missingFields.filter((f) => f !== 'Tỉnh' && f !== 'Xã');
           return {
             ...r,
             resolvedTinh: tinhCode,
@@ -189,6 +200,8 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
             status: 'custom',
             method: 'Thư viện thủ công (Vừa lưu)',
             isManualOverride: true,
+            missingFields: newMissing,
+            isMissingMandatory: newMissing.length > 0,
           };
         }
         return r;
@@ -202,7 +215,7 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
     setIsExporting(true);
     try {
       if (mode === 'inplace') {
-        const fileBytes = exportInplaceFile(wbData, processedRows);
+        const fileBytes = exportInplaceFile(wbData, processedRows, { dotKham });
         const nameWithoutExt = wbData.fileName.replace(/\.[^/.]+$/, '');
         const filename = generateOutputFilename(`${nameWithoutExt}_PhienDiaChi`);
         downloadExcelFile(fileBytes, filename);
@@ -230,6 +243,11 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
   const unresolvedCount = processedRows.filter((r) => r.status === 'unresolved').length;
   const successCount = resolvedCount + customCount;
   const successRate = totalRows > 0 ? Math.round((successCount / totalRows) * 100) : 0;
+  const compliantCount = processedRows.filter((r) => !r.isMissingMandatory).length;
+  const missingMandatoryCount = totalRows - compliantCount;
+
+  // Validate DotKham input
+  const isDotKhamValid = /^\d{4}(0[1-9]|1[0-2])$/.test(dotKham.trim());
 
   return (
     <div className="space-y-6">
@@ -262,7 +280,7 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
               Kéo thả file Excel vào đây, hoặc <span className="text-sky-600 underline">bấm để chọn file</span>
             </h3>
             <p className="text-xs text-slate-500 max-w-md mx-auto mb-6">
-              Hỗ trợ cả file mẫu chuẩn VNCare (<strong>.xls / .xlsx</strong>) và các file danh sách hợp đồng KSK, CBNV tùy ý của đơn vị.
+              Hỗ trợ file mẫu chuẩn VNCare (<strong>.xls / .xlsx</strong>) và các file danh sách hợp đồng KSK, CBNV tùy ý của đơn vị.
             </p>
           </div>
 
@@ -392,7 +410,7 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
                     <span>Chế độ 1: Phiên & điền vào file hiện tại</span>
                   </div>
                   <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                    Điền mã Tỉnh (cột L) và Xã (cột M) trực tiếp vào file đang nạp. Giữ nguyên 100% tất cả các cột dữ liệu khác và các sheet khác.
+                    Điền mã Tỉnh (cột L) và Xã (cột M) trực tiếp vào file đang nạp. Chuẩn hóa STT (1..N), Ngày sinh/Ngày cấp (DD/MM/YYYY), CCCD text general và giữ nguyên các sheet khác.
                   </p>
                 </div>
                 <div
@@ -419,7 +437,7 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
                     <span>Chế độ 2: Xuất Mẫu VNCare chuẩn (7 sheets)</span>
                   </div>
                   <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                    Chuyển đổi dữ liệu sang đúng form mẫu cổng KSK toàn dân VNCare (đầy đủ các sheet: DANHSACH, TINH, XA, QUOCGIA, DANTOC...).
+                    Chuyển đổi dữ liệu sang đúng form mẫu cổng KSK toàn dân VNCare (đầy đủ các sheet: DANHSACH, TINH, XA, QUOCGIA, DANTOC, GIOITINH, NGHENGHIEP).
                   </p>
                 </div>
                 <div
@@ -435,13 +453,18 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
 
           {/* Quick Mapping & Options Accordion */}
           <div className="pt-2 border-t border-slate-100">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 text-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2 text-xs">
                 <span className="text-slate-500 font-medium">Cột địa chỉ nhận diện:</span>
                 <span className="font-bold text-sky-800 bg-sky-100 px-2 py-0.5 rounded">
                   {mapping.addressCol >= 0
                     ? `Cột ${String.fromCharCode(65 + mapping.addressCol)}: "${wbData.headers[mapping.addressCol]}"`
                     : 'Chưa nhận diện được'}
+                </span>
+                <span className="text-slate-400">·</span>
+                <span className="text-slate-500">Đợt khám:</span>
+                <span className={`font-mono px-2 py-0.5 rounded font-semibold ${isDotKhamValid ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                  {dotKham}
                 </span>
               </div>
 
@@ -457,7 +480,23 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
 
             {showMappingConfig && (
               <div className="mt-3 p-4 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-3 animate-in fade-in">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Cột STT:</label>
+                    <select
+                      value={mapping.sttCol ?? -1}
+                      onChange={(e) => setMapping({ ...mapping, sttCol: Number(e.target.value) })}
+                      className="w-full p-2 border border-slate-300 rounded-lg bg-white"
+                    >
+                      <option value={-1}>-- Cột 0 (Mặc định) --</option>
+                      {wbData.headers.map((h, i) => (
+                        <option key={i} value={i}>
+                          Cột {String.fromCharCode(65 + i)}: {h || `(Cột ${i + 1})`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">Cột Địa chỉ nguồn (Bắt buộc):</label>
                     <select
@@ -475,7 +514,7 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">Cột Họ và tên (Tùy chọn):</label>
+                    <label className="block font-semibold text-slate-700 mb-1">Cột Họ và tên (Bắt buộc):</label>
                     <select
                       value={mapping.nameCol ?? -1}
                       onChange={(e) => setMapping({ ...mapping, nameCol: Number(e.target.value) })}
@@ -491,7 +530,7 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">Cột Ngày/Năm sinh (Tùy chọn):</label>
+                    <label className="block font-semibold text-slate-700 mb-1">Cột Ngày/Năm sinh (Bắt buộc):</label>
                     <select
                       value={mapping.dobCol ?? -1}
                       onChange={(e) => setMapping({ ...mapping, dobCol: Number(e.target.value) })}
@@ -507,42 +546,100 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
                   </div>
                 </div>
 
-                {mode === 'convert_to_vncare_template' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-200">
-                    <div>
-                      <label className="block font-semibold text-slate-700 mb-1">Mã Đợt khám (DOTKHAM):</label>
-                      <input
-                        type="text"
-                        value={dotKham}
-                        onChange={(e) => setDotKham(e.target.value)}
-                        placeholder="Ví dụ: 202601"
-                        className="w-full p-2 border border-slate-300 rounded-lg bg-white font-mono"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-semibold text-slate-700 mb-1">Nơi làm việc mặc định:</label>
-                      <input
-                        type="text"
-                        value={defaultWorkplace}
-                        onChange={(e) => setDefaultWorkplace(e.target.value)}
-                        placeholder="Ví dụ: Công ty TNHH ABC"
-                        className="w-full p-2 border border-slate-300 rounded-lg bg-white"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-semibold text-slate-700 mb-1">Nghề nghiệp mặc định:</label>
-                      <input
-                        type="text"
-                        value={defaultJob}
-                        onChange={(e) => setDefaultJob(e.target.value)}
-                        placeholder="6-Công nhân"
-                        className="w-full p-2 border border-slate-300 rounded-lg bg-white"
-                      />
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-200">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Cột Giới tính (Bắt buộc):</label>
+                    <select
+                      value={mapping.genderCol ?? -1}
+                      onChange={(e) => setMapping({ ...mapping, genderCol: Number(e.target.value) })}
+                      className="w-full p-2 border border-slate-300 rounded-lg bg-white"
+                    >
+                      <option value={-1}>-- Tự động --</option>
+                      {wbData.headers.map((h, i) => (
+                        <option key={i} value={i}>
+                          Cột {String.fromCharCode(65 + i)}: {h}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                )}
+
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Cột CCCD / CMND (Bắt buộc):</label>
+                    <select
+                      value={mapping.cccdCol ?? -1}
+                      onChange={(e) => setMapping({ ...mapping, cccdCol: Number(e.target.value) })}
+                      className="w-full p-2 border border-slate-300 rounded-lg bg-white"
+                    >
+                      <option value={-1}>-- Tự động --</option>
+                      {wbData.headers.map((h, i) => (
+                        <option key={i} value={i}>
+                          Cột {String.fromCharCode(65 + i)}: {h}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Cột Ngày cấp CCCD:</label>
+                    <select
+                      value={mapping.cccdDateCol ?? -1}
+                      onChange={(e) => setMapping({ ...mapping, cccdDateCol: Number(e.target.value) })}
+                      className="w-full p-2 border border-slate-300 rounded-lg bg-white"
+                    >
+                      <option value={-1}>-- Tự động --</option>
+                      {wbData.headers.map((h, i) => (
+                        <option key={i} value={i}>
+                          Cột {String.fromCharCode(65 + i)}: {h}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Mã Đợt khám (YYYYMM):
+                    </label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      value={dotKham}
+                      onChange={(e) => setDotKham(e.target.value.trim())}
+                      placeholder="Mẫu: 202601"
+                      className={`w-full p-2 border rounded-lg bg-white font-mono ${
+                        isDotKhamValid ? 'border-slate-300' : 'border-rose-400 bg-rose-50 text-rose-800'
+                      }`}
+                    />
+                    {!isDotKhamValid && (
+                      <span className="text-[10px] text-rose-600 block mt-0.5">
+                        Phải đúng 6 chữ số YYYYMM (ví dụ: 202601)
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Nơi làm việc mặc định:</label>
+                    <input
+                      type="text"
+                      value={defaultWorkplace}
+                      onChange={(e) => setDefaultWorkplace(e.target.value)}
+                      placeholder="Ví dụ: Công ty TNHH ABC"
+                      className="w-full p-2 border border-slate-300 rounded-lg bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Nghề nghiệp mặc định:</label>
+                    <input
+                      type="text"
+                      value={defaultJob}
+                      onChange={(e) => setDefaultJob(e.target.value)}
+                      placeholder="6-Công nhân"
+                      className="w-full p-2 border border-slate-300 rounded-lg bg-white"
+                    />
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -573,12 +670,44 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
       {/* KPI Cards & Results Panel */}
       {isProcessed && (
         <div className="space-y-5 animate-in fade-in duration-300">
+          {/* Compliance & Standards Status Ribbon */}
+          <div className="bg-slate-900 text-white rounded-xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-sky-500/20 rounded-lg text-sky-400">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm text-sky-300">
+                  Chuẩn hóa dữ liệu xuất VNCare & Hợp đồng KSK
+                </h4>
+                <div className="flex flex-wrap gap-x-3 gap-y-1 text-slate-300 mt-0.5 text-[11px]">
+                  <span>• Cột STT tự động 1..N</span>
+                  <span>• Ngày sinh & Ngày cấp: <strong>DD/MM/YYYY</strong></span>
+                  <span>• CCCD: <strong>12 số / 8-11 alphanumeric</strong> (bảo toàn số 0)</span>
+                  <span>• Đợt khám: <strong>{dotKham}</strong></span>
+                  <span>• Toàn bộ cột bắt buộc: <strong>Text General (@)</strong></span>
+                  <span>• Font <strong>Times New Roman 13pt</strong> & Giãn dòng</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-right shrink-0">
+              <span className={`inline-flex items-center px-2.5 py-1 rounded-full font-bold text-xs ${
+                missingMandatoryCount === 0
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+              }`}>
+                {missingMandatoryCount === 0 ? '✓ 100% Đầy đủ cột bắt buộc' : `Cần hoàn thiện ${missingMandatoryCount} dòng`}
+              </span>
+            </div>
+          </div>
+
           {/* KPI Dashboard */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
               <span className="text-xs text-slate-500 font-medium">Tổng số dòng</span>
               <div className="text-2xl font-bold text-slate-800 mt-1">{totalRows}</div>
-              <span className="text-[11px] text-slate-400">Dòng cần xử lý</span>
+              <span className="text-[11px] text-slate-400 font-mono">STT: 1 đến {totalRows}</span>
             </div>
 
             <div className="bg-white p-4 rounded-xl border border-emerald-200 shadow-2xs bg-emerald-50/20">
@@ -589,7 +718,7 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
                 {successCount}{' '}
                 <span className="text-sm font-semibold text-emerald-600">({successRate}%)</span>
               </div>
-              <span className="text-[11px] text-emerald-600">Tự động + Thư viện</span>
+              <span className="text-[11px] text-emerald-600">Đã điền Tỉnh & Xã</span>
             </div>
 
             <div className="bg-white p-4 rounded-xl border border-amber-200 shadow-2xs bg-amber-50/20">
@@ -658,7 +787,10 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
                   Kẻ ô toàn bộ (Borders)
                 </span>
                 <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium border border-slate-200">
-                  Giãn dòng & Độ rộng tự động
+                  Định dạng Text General (@)
+                </span>
+                <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium border border-slate-200">
+                  Đợt khám: {dotKham}
                 </span>
               </div>
             </div>

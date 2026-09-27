@@ -43,8 +43,11 @@ export interface CustomDictRule {
 
 export type ResolveStatus = 'resolved' | 'custom' | 'unresolved' | 'empty';
 
+export type ResolutionType = '3_tier_conversion' | '2_tier_exact' | 'custom_dict' | 'unresolved' | 'empty';
+
 export interface ResolveResult {
   status: ResolveStatus;
+  resolutionType: ResolutionType;
   tinhCode: string;
   xaCode: string;
   tinhName: string;
@@ -76,9 +79,12 @@ export interface ProcessedRow {
   rowIndex: number; // 0-based index in data
   stt: number | string;
   name: string;
+  rawDob?: string;
   dobFormatted: string;
   isDobValid: boolean;
+  rawGender?: string;
   genderFormatted: string;
+  rawCccd?: string;
   cccdFormatted: string;
   isCccdValid: boolean;
   cccdDateFormatted: string;
@@ -92,6 +98,7 @@ export interface ProcessedRow {
   resolvedTinh: string;
   resolvedXa: string;
   status: ResolveStatus;
+  resolutionType: ResolutionType;
   method: string;
   originalRowData: any[];
   isManualOverride?: boolean;
@@ -100,4 +107,5 @@ export interface ProcessedRow {
 }
 
 export type ProcessingMode = 'inplace' | 'convert_to_vncare_template';
+
 

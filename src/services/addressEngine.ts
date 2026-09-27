@@ -217,6 +217,7 @@ export function resolveAddress(
   if (!rawAddress || !rawAddress.trim()) {
     return {
       status: 'empty',
+      resolutionType: 'empty',
       tinhCode: '',
       xaCode: '',
       tinhName: '',
@@ -238,6 +239,7 @@ export function resolveAddress(
       if (rule.rawAddress && rule.rawAddress.trim().toLowerCase() === rawTrimmed.toLowerCase()) {
         return {
           status: 'custom',
+          resolutionType: 'custom_dict',
           tinhCode: rule.targetTinhCode,
           xaCode: rule.targetXaCode,
           tinhName: rule.targetTinhName,
@@ -252,6 +254,7 @@ export function resolveAddress(
       if (ruleNorm && norm === ruleNorm) {
         return {
           status: 'custom',
+          resolutionType: 'custom_dict',
           tinhCode: rule.targetTinhCode,
           xaCode: rule.targetXaCode,
           tinhName: rule.targetTinhName,
@@ -265,6 +268,7 @@ export function resolveAddress(
       if (ruleNorm && ruleNorm.length >= 4 && matchWord(ruleNorm, norm)) {
         return {
           status: 'custom',
+          resolutionType: 'custom_dict',
           tinhCode: rule.targetTinhCode,
           xaCode: rule.targetXaCode,
           tinhName: rule.targetTinhName,
@@ -351,6 +355,7 @@ export function resolveAddress(
       const best = candidates[0];
       return {
         status: 'resolved',
+        resolutionType: '2_tier_exact',
         tinhCode: best.commune.tinhCode,
         xaCode: best.commune.code,
         tinhName: best.commune.tinhName,
@@ -403,6 +408,7 @@ export function resolveAddress(
     if (top.score >= 35 || (oldCandidates.length === 1 && top.score >= 15)) {
       return {
         status: 'resolved',
+        resolutionType: '3_tier_conversion',
         tinhCode: top.record.targetTinhCode,
         xaCode: top.record.targetXaCode,
         tinhName: top.record.targetTinhName,
@@ -434,6 +440,7 @@ export function resolveAddress(
         if (matchWord(provCore, norm)) {
           return {
             status: 'resolved',
+            resolutionType: '2_tier_exact',
             tinhCode: item.commune.tinhCode,
             xaCode: item.commune.code,
             tinhName: item.commune.tinhName,
@@ -450,6 +457,7 @@ export function resolveAddress(
       const best = nationwide[0].commune;
       return {
         status: 'resolved',
+        resolutionType: '2_tier_exact',
         tinhCode: best.tinhCode,
         xaCode: best.code,
         tinhName: best.tinhName,
@@ -463,6 +471,7 @@ export function resolveAddress(
   // 5. Unresolved
   return {
     status: 'unresolved',
+    resolutionType: 'unresolved',
     tinhCode: '',
     xaCode: '',
     tinhName: '',

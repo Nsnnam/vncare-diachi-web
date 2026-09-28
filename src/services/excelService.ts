@@ -507,17 +507,18 @@ export function isDateFormatValid(formatted: string): boolean {
  * Format and validate CCCD / CMND / Hộ chiếu.
  * Rule: 8-11 alphanumeric characters or exactly 12 digits.
  * Automatically restores stripped leading zero for 11-digit numbers.
+ * Empty or placeholder zeros (e.g. 000000000000) are treated as empty (bỏ trống).
  */
 export function formatCccd(
   val: any,
-  fallback: string = '000000000000'
-): { formatted: string; isValid: boolean; isPlaceholder: boolean } {
+  fallback: string = ''
+): { formatted: string; isValid: boolean; isEmpty: boolean } {
   if (val === null || val === undefined || val === '') {
-    return { formatted: fallback, isValid: false, isPlaceholder: true };
+    return { formatted: fallback, isValid: false, isEmpty: true };
   }
   let s = String(val).trim().replace(/[-\s.]/g, '');
-  if (!s) {
-    return { formatted: fallback, isValid: false, isPlaceholder: true };
+  if (!s || /^0+$/.test(s)) {
+    return { formatted: fallback, isValid: false, isEmpty: true };
   }
   // If exactly 11 digits, it is almost certainly a 12-digit CCCD with the leading '0' stripped by Excel numeric coercion
   if (/^\d{11}$/.test(s)) {
@@ -525,13 +526,13 @@ export function formatCccd(
   }
   // 12 digits CCCD
   if (/^\d{12}$/.test(s)) {
-    return { formatted: s, isValid: true, isPlaceholder: false };
+    return { formatted: s, isValid: true, isEmpty: false };
   }
   // 8-11 alphanumeric (e.g. 9 digits CMND or 8-char Passport)
   if (/^[A-Za-z0-9]{8,11}$/.test(s)) {
-    return { formatted: s.toUpperCase(), isValid: true, isPlaceholder: false };
+    return { formatted: s.toUpperCase(), isValid: true, isEmpty: false };
   }
-  return { formatted: s, isValid: false, isPlaceholder: false };
+  return { formatted: s, isValid: false, isEmpty: false };
 }
 
 /**
@@ -645,9 +646,10 @@ export function processAddressRows(
     const genderFormatted = formatGender(rawGender);
 
     const rawCccd = mapping.cccdCol !== undefined && mapping.cccdCol >= 0 ? row[mapping.cccdCol] : '';
-    const cccdResult = formatCccd(rawCccd, '000000000000');
+    const cccdResult = formatCccd(rawCccd, '');
     const cccdFormatted = cccdResult.formatted;
     const isCccdValid = cccdResult.isValid;
+    const isCccdMissing = cccdResult.isEmpty;
 
     const rawCccdDate = mapping.cccdDateCol !== undefined && mapping.cccdDateCol >= 0 ? row[mapping.cccdDateCol] : '';
     const cccdDateFormatted = formatDate(rawCccdDate, '01/01/2021');
@@ -683,7 +685,11 @@ export function processAddressRows(
     if (!ethnicityFormatted) missingFields.push('Dân tộc');
     if (!nationFormatted) missingFields.push('Quốc gia');
     if (!rawAddress) missingFields.push('Địa chỉ');
-    if (!cccdFormatted || !isCccdValid) missingFields.push('CCCD');
+    if (isCccdMissing) {
+      missingFields.push('CCCD (Thiếu)');
+    } else if (!isCccdValid) {
+      missingFields.push('CCCD (Sai định dạng)');
+    }
 
     if (!rawAddress) {
       missingFields.push('Tỉnh', 'Xã');
@@ -699,6 +705,7 @@ export function processAddressRows(
         rawCccd: rawCccd !== undefined && rawCccd !== null ? String(rawCccd) : '',
         cccdFormatted,
         isCccdValid,
+        isCccdMissing,
         cccdDateFormatted,
         isCccdDateValid,
         cccdPlaceFormatted,
@@ -735,6 +742,7 @@ export function processAddressRows(
       rawCccd: rawCccd !== undefined && rawCccd !== null ? String(rawCccd) : '',
       cccdFormatted,
       isCccdValid,
+      isCccdMissing,
       cccdDateFormatted,
       isCccdDateValid,
       cccdPlaceFormatted,
@@ -814,9 +822,9 @@ export function exportInplaceFile(
       sheetData[targetRowIdx][wbData.columnMapping.genderCol] = pr.genderFormatted;
     }
 
-    // CCCD formatting (preserving text format)
+    // CCCD formatting (preserving text format, blank if missing)
     if (wbData.columnMapping.cccdCol !== undefined && wbData.columnMapping.cccdCol >= 0) {
-      sheetData[targetRowIdx][wbData.columnMapping.cccdCol] = pr.cccdFormatted;
+      sheetData[targetRowIdx][wbData.columnMapping.cccdCol] = pr.cccdFormatted || '';
     }
 
     // CCCD Date formatting
@@ -996,7 +1004,7 @@ export async function exportVncareTemplateFile(
     const workplace = pr.workplaceFormatted || options.defaultWorkplace || '';
     const ethnicity = pr.ethnicityFormatted || defaultEthnicity;
     const nation = pr.nationFormatted || '0-Việt Nam';
-    const cccd = pr.cccdFormatted || '000000000000';
+    const cccd = pr.cccdFormatted || '';
     const cccdDate = pr.cccdDateFormatted || '01/01/2021';
     const cccdPlace = pr.cccdPlaceFormatted || 'Cục cảnh sát';
     const tinh = pr.resolvedTinh || '';

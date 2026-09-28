@@ -87,6 +87,7 @@ export interface ProcessedRow {
   rawCccd?: string;
   cccdFormatted: string;
   isCccdValid: boolean;
+  isCccdMissing: boolean;
   cccdDateFormatted: string;
   isCccdDateValid: boolean;
   cccdPlaceFormatted: string;

@@ -14,14 +14,21 @@ import {
   Sparkles,
   Layers,
   MapPin,
-  CheckCheck
+  CheckCheck,
+  CreditCard
 } from 'lucide-react';
 import { ProcessedRow } from '../types';
 import { PROVINCES_LIST, getCommunesForProvince } from '../services/addressEngine';
 
 interface PreviewTableProps {
   rows: ProcessedRow[];
-  onUpdateRow: (rowIndex: number, tinhCode: string, xaCode: string, saveDict?: boolean) => void;
+  onUpdateRow: (
+    rowIndex: number,
+    tinhCode: string,
+    xaCode: string,
+    saveDict?: boolean,
+    newCccd?: string
+  ) => void;
   selectedFilter?: string;
   onFilterChange?: (filter: string) => void;
 }
@@ -32,14 +39,14 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
   selectedFilter,
   onFilterChange
 }) => {
-  const [internalFilter, setInternalFilter] = useState<'all' | '3_tier' | '2_tier' | 'custom' | 'unresolved' | 'warning'>('all');
+  const [internalFilter, setInternalFilter] = useState<'all' | '3_tier' | '2_tier' | 'custom' | 'unresolved' | 'missing_cccd' | 'warning'>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(25);
 
   const activeFilter = (selectedFilter as any) || internalFilter;
 
-  const handleSetFilter = (f: 'all' | '3_tier' | '2_tier' | 'custom' | 'unresolved' | 'warning') => {
+  const handleSetFilter = (f: 'all' | '3_tier' | '2_tier' | 'custom' | 'unresolved' | 'missing_cccd' | 'warning') => {
     if (onFilterChange) {
       onFilterChange(f);
     } else {
@@ -52,6 +59,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
   const [editTinh, setEditTinh] = useState<string>('');
   const [editXa, setEditXa] = useState<string>('');
+  const [editCccd, setEditCccd] = useState<string>('');
   const [editSaveToDict, setEditSaveToDict] = useState<boolean>(true);
 
   // Statistics for filters
@@ -59,6 +67,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
   const count2Cap = rows.filter((r) => r.resolutionType === '2_tier_exact').length;
   const countCustom = rows.filter((r) => r.status === 'custom').length;
   const countUnresolved = rows.filter((r) => r.status === 'unresolved').length;
+  const countMissingCccd = rows.filter((r) => r.isCccdMissing).length;
   const countWarning = rows.filter((r) => r.isMissingMandatory).length;
 
   // Filtered rows
@@ -69,6 +78,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
       if (activeFilter === '2_tier' && r.resolutionType !== '2_tier_exact') return false;
       if (activeFilter === 'custom' && r.status !== 'custom') return false;
       if (activeFilter === 'unresolved' && r.status !== 'unresolved') return false;
+      if (activeFilter === 'missing_cccd' && !r.isCccdMissing) return false;
       if (activeFilter === 'warning' && !r.isMissingMandatory) return false;
 
       // Search filter
@@ -80,7 +90,8 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
         const inXa = r.resolvedXa.toLowerCase().includes(q);
         const inCccd = (r.cccdFormatted || '').toLowerCase().includes(q);
         const inMethod = (r.method || '').toLowerCase().includes(q);
-        if (!inAddr && !inName && !inTinh && !inXa && !inCccd && !inMethod) return false;
+        const inMissingCccd = (q.includes('cccd') || q.includes('thieu') || q.includes('thiếu')) && r.isCccdMissing;
+        if (!inAddr && !inName && !inTinh && !inXa && !inCccd && !inMethod && !inMissingCccd) return false;
       }
 
       return true;
@@ -99,6 +110,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
     setEditingRowIndex(row.rowIndex);
     setEditTinh(row.resolvedTinh || '');
     setEditXa(row.resolvedXa || '');
+    setEditCccd(row.cccdFormatted || (row.rawCccd ? String(row.rawCccd) : ''));
     setEditSaveToDict(true);
   };
 
@@ -106,14 +118,15 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
     setEditingRowIndex(null);
     setEditTinh('');
     setEditXa('');
+    setEditCccd('');
   };
 
   const saveEdit = (row: ProcessedRow) => {
-    if (!editTinh || !editXa) {
-      alert('Vui lòng chọn cả Tỉnh và Xã!');
+    if ((editTinh && !editXa) || (!editTinh && editXa)) {
+      alert('Nếu chọn địa giới hành chính, vui lòng chọn đủ cả Tỉnh và Xã!');
       return;
     }
-    onUpdateRow(row.rowIndex, editTinh, editXa, editSaveToDict);
+    onUpdateRow(row.rowIndex, editTinh, editXa, editSaveToDict, editCccd);
     setEditingRowIndex(null);
   };
 
@@ -220,6 +233,20 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
             <span>Chưa khớp ({countUnresolved})</span>
           </button>
 
+          {countMissingCccd > 0 && (
+            <button
+              onClick={() => handleSetFilter('missing_cccd')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
+                activeFilter === 'missing_cccd'
+                  ? 'bg-rose-600 text-white shadow-xs'
+                  : 'bg-white text-rose-700 hover:bg-rose-50 border border-rose-200'
+              }`}
+            >
+              <CreditCard className="w-3.5 h-3.5 text-rose-500" />
+              <span>Thiếu CCCD ({countMissingCccd})</span>
+            </button>
+          )}
+
           {countWarning > 0 && (
             <button
               onClick={() => handleSetFilter('warning')}
@@ -259,7 +286,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
             <tr className="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200 text-[11px]">
               {/* Input Group */}
               <th scope="col" className="px-2.5 py-2 text-center w-12 border-r border-slate-200">STT</th>
-              <th scope="col" className="px-3 py-2 text-left w-36 border-r border-slate-200">Họ và tên</th>
+              <th scope="col" className="px-3 py-2 text-left w-40 border-r border-slate-200">Họ và tên</th>
               <th scope="col" className="px-2.5 py-2 text-center w-28 border-r border-slate-200">Ngày sinh / CCCD</th>
               <th scope="col" className="px-3 py-2 text-left min-w-[200px] border-r-2 border-slate-300">
                 Địa chỉ gốc (Cột N)
@@ -272,7 +299,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
               <th scope="col" className="px-3 py-2 text-left w-44 bg-emerald-50/50 border-r border-slate-200">
                 Xã đã phiên (Cột M)
               </th>
-              <th scope="col" className="px-2.5 py-2 text-center w-28 bg-emerald-50/50 border-r border-slate-200">
+              <th scope="col" className="px-2.5 py-2 text-center w-36 bg-emerald-50/50 border-r border-slate-200">
                 CCCD chuẩn (12 số)
               </th>
               <th scope="col" className="px-2.5 py-2 text-center w-24 bg-emerald-50/50 border-r border-slate-200">
@@ -281,7 +308,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
               <th scope="col" className="px-3 py-2 text-left min-w-[170px] bg-emerald-50/50 border-r border-slate-200">
                 Quy tắc đối chiếu
               </th>
-              <th scope="col" className="px-2.5 py-2 text-center w-16 bg-emerald-50/50">
+              <th scope="col" className="px-2.5 py-2 text-center w-20 bg-emerald-50/50">
                 Thao tác
               </th>
             </tr>
@@ -302,8 +329,10 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                   <tr
                     key={row.rowIndex}
                     className={`hover:bg-sky-50/40 transition-colors ${
-                      row.isMissingMandatory
+                      row.isCccdMissing
                         ? 'bg-rose-50/30'
+                        : row.isMissingMandatory
+                        ? 'bg-rose-50/20'
                         : row.status === 'unresolved'
                         ? 'bg-red-50/40'
                         : row.status === 'custom'
@@ -320,7 +349,14 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
 
                     {/* INPUT 2: Họ và tên */}
                     <td className="px-3 py-2 font-medium text-slate-900 border-r border-slate-200">
-                      <div>{row.name || <span className="text-amber-600 italic">Bệnh nhân {row.stt}</span>}</div>
+                      <div className="flex items-center space-x-1.5 flex-wrap">
+                        <span className="font-semibold">{row.name || <span className="text-amber-600 italic">Bệnh nhân {row.stt}</span>}</span>
+                        {row.isCccdMissing && (
+                          <span className="text-[9px] bg-rose-100 text-rose-700 font-bold px-1.5 py-0.2 rounded border border-rose-200 shrink-0" title="Chưa có số CCCD">
+                            Thiếu CCCD
+                          </span>
+                        )}
+                      </div>
                       <div className="text-[10px] text-slate-400">{row.genderFormatted}</div>
                     </td>
 
@@ -393,13 +429,47 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
 
                     {/* OUTPUT 3: CCCD chuẩn VNCare (12 số / 8-11 alphanumeric) */}
                     <td className="px-2.5 py-2 text-center font-mono bg-emerald-50/20 border-r border-slate-200">
-                      {row.isCccdValid ? (
-                        <span className="font-bold text-slate-800" title={row.cccdFormatted.length === 12 ? 'CCCD 12 chữ số' : 'CMND / Hộ chiếu'}>
+                      {isEditing ? (
+                        <div className="space-y-1">
+                          <input
+                            type="text"
+                            value={editCccd}
+                            onChange={(e) => setEditCccd(e.target.value)}
+                            placeholder="Nhập CCCD..."
+                            className="w-full text-xs font-mono py-1 px-1.5 border border-sky-400 rounded bg-white text-center font-bold"
+                            maxLength={15}
+                            title="Nhập 12 số CCCD hoặc 8-11 ký tự CMND/Hộ chiếu"
+                          />
+                          <span className="text-[9px] text-slate-400 block">
+                            (Bỏ trống nếu chưa có)
+                          </span>
+                        </div>
+                      ) : row.isCccdMissing ? (
+                        <div className="space-y-0.5">
+                          <span
+                            className="inline-flex items-center text-rose-700 bg-rose-100 px-2 py-0.5 rounded text-[11px] font-bold border border-rose-300"
+                            title={`Dòng ${row.stt} (${row.name}) chưa có số CCCD`}
+                          >
+                            <AlertTriangle className="w-3 h-3 mr-1 text-rose-600 shrink-0" />
+                            Chưa có CCCD
+                          </span>
+                          <span className="text-[10px] text-rose-600/90 font-medium block">
+                            (Xuất Excel để trống)
+                          </span>
+                        </div>
+                      ) : row.isCccdValid ? (
+                        <span
+                          className="font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-2xs inline-block"
+                          title={row.cccdFormatted.length === 12 ? 'CCCD 12 chữ số' : 'CMND / Hộ chiếu'}
+                        >
                           {row.cccdFormatted}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded text-[10px] font-semibold border border-rose-200" title="Chưa đúng chuẩn 12 số hoặc 8-11 alphanumeric">
-                          {row.cccdFormatted || 'Thiếu'}
+                        <span
+                          className="inline-flex items-center text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded text-[10px] font-semibold border border-amber-200"
+                          title="Chưa đúng chuẩn 12 số hoặc 8-11 alphanumeric"
+                        >
+                          {row.cccdFormatted || 'Sai định dạng'}
                         </span>
                       )}
                     </td>
@@ -480,11 +550,15 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                       ) : (
                         <button
                           onClick={() => startEdit(row)}
-                          className="px-2 py-1 text-slate-500 hover:text-sky-600 hover:bg-sky-50 rounded text-[11px] font-medium flex items-center space-x-0.5 mx-auto transition-colors"
-                          title="Sửa Tỉnh/Xã cho dòng này"
+                          className={`px-2 py-1 rounded text-[11px] font-medium flex items-center space-x-0.5 mx-auto transition-colors ${
+                            row.isCccdMissing
+                              ? 'text-rose-700 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 font-semibold shadow-2xs'
+                              : 'text-slate-500 hover:text-sky-600 hover:bg-sky-50'
+                          }`}
+                          title={row.isCccdMissing ? `Bấm để nhập CCCD cho dòng ${row.stt} (${row.name})` : 'Sửa Tỉnh/Xã/CCCD'}
                         >
                           <Edit3 className="w-3 h-3" />
-                          <span>Sửa</span>
+                          <span>{row.isCccdMissing ? 'Nhập CCCD' : 'Sửa'}</span>
                         </button>
                       )}
                     </td>

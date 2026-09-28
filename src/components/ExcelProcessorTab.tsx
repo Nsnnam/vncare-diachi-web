@@ -28,6 +28,7 @@ import {
   readWorkbook,
   switchSheet,
   processAddressRows,
+  formatCccd,
   exportInplaceFile,
   exportVncareTemplateFile,
   downloadExcelFile,
@@ -165,27 +166,46 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
     rowIndex: number,
     tinhCode: string,
     xaCode: string,
-    saveToDict: boolean = false
+    saveToDict: boolean = false,
+    newCccd?: string
   ) => {
     setProcessedRows((prev) => {
       const updated = [...prev];
       const target = updated.find((r) => r.rowIndex === rowIndex);
       if (target) {
-        target.resolvedTinh = tinhCode;
-        target.resolvedXa = xaCode;
-        target.status = 'custom';
-        target.resolutionType = 'custom_dict';
-        target.method = 'Chỉnh sửa trực tiếp';
-        target.isManualOverride = true;
+        if (tinhCode && xaCode) {
+          target.resolvedTinh = tinhCode;
+          target.resolvedXa = xaCode;
+          target.status = 'custom';
+          target.resolutionType = 'custom_dict';
+          target.method = 'Chỉnh sửa trực tiếp';
+          target.isManualOverride = true;
+          target.missingFields = target.missingFields.filter((f) => f !== 'Tỉnh' && f !== 'Xã');
+
+          if (saveToDict && target.rawAddress) {
+            addOrUpdateCustomRule(target.rawAddress, tinhCode, xaCode, 'Sửa từ bảng');
+            onCustomDictUpdated();
+          }
+        }
+
+        if (newCccd !== undefined) {
+          const cccdRes = formatCccd(newCccd, '');
+          target.rawCccd = newCccd;
+          target.cccdFormatted = cccdRes.formatted;
+          target.isCccdValid = cccdRes.isValid;
+          target.isCccdMissing = cccdRes.isEmpty;
+
+          // Update missingFields for CCCD
+          target.missingFields = target.missingFields.filter((f) => !f.startsWith('CCCD'));
+          if (cccdRes.isEmpty) {
+            target.missingFields.push('CCCD (Thiếu)');
+          } else if (!cccdRes.isValid) {
+            target.missingFields.push('CCCD (Sai định dạng)');
+          }
+        }
 
         // Recalculate mandatory missing
-        target.missingFields = target.missingFields.filter((f) => f !== 'Tỉnh' && f !== 'Xã');
         target.isMissingMandatory = target.missingFields.length > 0;
-
-        if (saveToDict && target.rawAddress) {
-          addOrUpdateCustomRule(target.rawAddress, tinhCode, xaCode, 'Sửa từ bảng');
-          onCustomDictUpdated();
-        }
       }
       return updated;
     });
@@ -257,6 +277,8 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
   const count2Cap = processedRows.filter((r) => r.resolutionType === '2_tier_exact').length;
   const customCount = processedRows.filter((r) => r.status === 'custom').length;
   const unresolvedCount = processedRows.filter((r) => r.status === 'unresolved').length;
+  const missingCccdRows = processedRows.filter((r) => r.isCccdMissing);
+  const countMissingCccd = missingCccdRows.length;
   const successCount = count3Cap + count2Cap + customCount;
   const successRate = totalRows > 0 ? Math.round((successCount / totalRows) * 100) : 0;
   const compliantCount = processedRows.filter((r) => !r.isMissingMandatory).length;
@@ -838,7 +860,7 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {/* Card 1: 3-tier conversion */}
               <div
                 onClick={() => setTableFilter('3_tier')}
@@ -888,9 +910,9 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
               >
                 <div className="flex items-center justify-between text-amber-700 text-xs font-semibold">
                   <span className="flex items-center">
-                    <Bookmark className="w-3.5 h-3.5 mr-1 text-amber-600" /> Thư viện thủ công
+                    <Bookmark className="w-3.5 h-3.5 mr-1 text-amber-600" /> Thư viện riêng
                   </span>
-                  <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-mono">Quy tắc riêng</span>
+                  <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-mono">Thủ công</span>
                 </div>
                 <div className="text-2xl font-extrabold text-amber-900 mt-1">{customCount}</div>
                 <div className="text-[11px] text-amber-600 truncate mt-0.5">Đã học từ các lần trước</div>
@@ -912,7 +934,7 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
               >
                 <div className="flex items-center justify-between text-rose-700 text-xs font-semibold">
                   <span className="flex items-center">
-                    <AlertTriangle className="w-3.5 h-3.5 mr-1 text-rose-600" /> Chưa nhận diện
+                    <AlertTriangle className="w-3.5 h-3.5 mr-1 text-rose-600" /> Chưa khớp
                   </span>
                   {unresolvedCount > 0 && (
                     <span className="text-[10px] bg-rose-100 text-rose-800 px-1.5 py-0.2 rounded font-semibold animate-pulse">
@@ -926,10 +948,41 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
                 </div>
               </div>
 
-              {/* Card 5: Overall Reconciliation Rate */}
-              <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-900 text-white shadow-xs col-span-2 sm:col-span-4 lg:col-span-1">
+              {/* Card 5: Missing CCCD */}
+              <div
+                onClick={() => setTableFilter('missing_cccd')}
+                className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+                  tableFilter === 'missing_cccd'
+                    ? 'bg-rose-50 border-rose-400 ring-2 ring-rose-400 shadow-sm'
+                    : countMissingCccd > 0
+                    ? 'bg-rose-50/60 border-rose-200 hover:border-rose-300 hover:shadow-2xs'
+                    : 'bg-white border-slate-200'
+                }`}
+              >
+                <div className="flex items-center justify-between text-rose-700 text-xs font-semibold">
+                  <span className="flex items-center">
+                    <CreditCard className="w-3.5 h-3.5 mr-1 text-rose-600" /> Thiếu CCCD
+                  </span>
+                  {countMissingCccd > 0 ? (
+                    <span className="text-[10px] bg-rose-100 text-rose-800 px-1.5 py-0.2 rounded font-semibold animate-pulse">
+                      Cần bổ sung
+                    </span>
+                  ) : (
+                    <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-semibold">
+                      Đủ 100%
+                    </span>
+                  )}
+                </div>
+                <div className="text-2xl font-extrabold text-rose-900 mt-1">{countMissingCccd}</div>
+                <div className="text-[11px] text-rose-600 truncate mt-0.5">
+                  {countMissingCccd > 0 ? 'Bấm lọc người thiếu ➔' : 'Đã có đủ CCCD'}
+                </div>
+              </div>
+
+              {/* Card 6: Overall Reconciliation Rate */}
+              <div className="p-3.5 rounded-xl border border-slate-200 bg-slate-900 text-white shadow-xs col-span-2 sm:col-span-1 lg:col-span-1">
                 <div className="text-slate-400 text-xs font-medium flex items-center justify-between">
-                  <span>Tỷ lệ đối chiếu thành công</span>
+                  <span>Tỷ lệ khớp địa chỉ</span>
                   <CheckCheck className="w-4 h-4 text-emerald-400" />
                 </div>
                 <div className="text-2xl font-black text-emerald-400 mt-1">
@@ -941,6 +994,78 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
               </div>
             </div>
           </div>
+
+          {/* Missing CCCD Alert Banner */}
+          {countMissingCccd > 0 && (
+            <div className="bg-gradient-to-r from-rose-50 via-red-50 to-amber-50 border-2 border-rose-300 text-rose-900 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start sm:items-center space-x-3">
+                  <div className="p-2.5 bg-rose-500 text-white rounded-xl shadow-xs shrink-0">
+                    <CreditCard className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <h4 className="font-extrabold text-rose-900 text-sm sm:text-base">
+                        CẢNH BÁO: PHÁT HIỆN {countMissingCccd} NGƯỜI BỆNH / CBNV CHƯA CÓ CCCD!
+                      </h4>
+                      <span className="px-2 py-0.5 bg-rose-200 text-rose-800 rounded-full text-xs font-bold font-mono">
+                        {countMissingCccd} dòng
+                      </span>
+                    </div>
+                    <p className="text-xs text-rose-700 mt-0.5 leading-relaxed">
+                      Theo quy định: Cột CCCD của những người này sẽ được <strong>để trống hoàn toàn</strong> trong file Excel xuất ra. Quý đơn vị có thể bấm nút <strong>"Nhập CCCD"</strong> tại từng dòng ở bảng bên dưới để bổ sung trực tiếp nếu có.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setTableFilter('missing_cccd')}
+                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center space-x-1.5 cursor-pointer shrink-0"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <span>Lọc xem {countMissingCccd} dòng thiếu CCCD</span>
+                </button>
+              </div>
+
+              {/* Quick list of missing persons & STT */}
+              <div className="pt-2 border-t border-rose-200/80">
+                <div className="text-[11px] font-bold text-rose-800 mb-1.5 flex items-center justify-between">
+                  <span>Danh sách người bệnh & số dòng thiếu CCCD:</span>
+                  {countMissingCccd > 12 && (
+                    <span className="text-rose-600 font-normal">
+                      (Hiển thị 12/{countMissingCccd} người — bấm "Lọc xem" để lọc toàn bộ)
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
+                  {missingCccdRows.slice(0, 16).map((r) => (
+                    <button
+                      key={r.rowIndex}
+                      onClick={() => setTableFilter('missing_cccd')}
+                      className="inline-flex items-center space-x-1.5 px-2.5 py-1 bg-white hover:bg-rose-100 border border-rose-300 rounded-lg text-xs text-rose-900 transition-colors shadow-2xs group cursor-pointer"
+                      title={`Dòng STT ${r.stt}: ${r.name} - ${r.rawAddress || 'Địa chỉ trống'}`}
+                    >
+                      <span className="font-mono font-bold text-rose-700 bg-rose-100 px-1 py-0.2 rounded text-[10px]">
+                        Dòng {r.stt}
+                      </span>
+                      <span className="font-semibold">{r.name}</span>
+                      <span className="text-[10px] text-slate-400 group-hover:text-rose-600">
+                        (Chưa có CCCD)
+                      </span>
+                    </button>
+                  ))}
+                  {countMissingCccd > 16 && (
+                    <button
+                      onClick={() => setTableFilter('missing_cccd')}
+                      className="inline-flex items-center px-2.5 py-1 bg-rose-100 hover:bg-rose-200 text-rose-800 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      + {countMissingCccd - 16} người khác...
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Unmapped Alert Banner if any unresolved */}
           {unresolvedCount > 0 && (

@@ -98,6 +98,9 @@ export interface ProcessedRow {
   rawAddress: string;
   resolvedTinh: string;
   resolvedXa: string;
+  resolvedTinhName?: string;
+  resolvedXaName?: string;
+  address2Tier?: string; // "Phường Vĩnh Phúc, Tỉnh Phú Thọ"
   status: ResolveStatus;
   resolutionType: ResolutionType;
   method: string;

@@ -1,6 +1,13 @@
 import * as XLSX from 'xlsx-js-style';
 import { ColumnMapping, ProcessedRow, ProcessingMode } from '../types';
-import { normalizeText, resolveAddress, PROVINCES_LIST, COMMUNES_LIST } from './addressEngine';
+import {
+  normalizeText,
+  resolveAddress,
+  PROVINCES_LIST,
+  COMMUNES_LIST,
+  extractCleanAdminName,
+  formatAddress2Tier,
+} from './addressEngine';
 import { getCustomDictRules } from './customDictService';
 
 export interface ParsedWorkbookData {
@@ -716,6 +723,9 @@ export function processAddressRows(
         rawAddress: '',
         resolvedTinh: '',
         resolvedXa: '',
+        resolvedTinhName: '',
+        resolvedXaName: '',
+        address2Tier: '',
         status: 'empty',
         resolutionType: 'empty',
         method: 'Địa chỉ trống',
@@ -729,6 +739,12 @@ export function processAddressRows(
     const resolved = resolveAddress(rawAddress, customRules);
     if (!resolved.tinhCode) missingFields.push('Tỉnh');
     if (!resolved.xaCode) missingFields.push('Xã');
+
+    const resolvedTinh = resolved.tinhCode;
+    const resolvedXa = resolved.xaCode;
+    const resolvedTinhName = resolved.tinhName || extractCleanAdminName(resolvedTinh);
+    const resolvedXaName = resolved.xaName || extractCleanAdminName(resolvedXa);
+    const address2Tier = formatAddress2Tier(resolvedXa, resolvedTinh);
 
     results.push({
       rowIndex: idx,
@@ -751,8 +767,11 @@ export function processAddressRows(
       ethnicityFormatted,
       nationFormatted,
       rawAddress,
-      resolvedTinh: resolved.tinhCode,
-      resolvedXa: resolved.xaCode,
+      resolvedTinh,
+      resolvedXa,
+      resolvedTinhName,
+      resolvedXaName,
+      address2Tier,
       status: resolved.status,
       resolutionType: resolved.resolutionType,
       method: resolved.method,
@@ -771,6 +790,7 @@ export function exportInplaceFile(
   processedRows: ProcessedRow[],
   options: {
     dotKham?: string;
+    includeAddress2Tier?: boolean;
   } = {}
 ): Uint8Array {
   const originalWb = wbData.workbook;
@@ -780,14 +800,36 @@ export function exportInplaceFile(
   let tinhCol = wbData.columnMapping.tinhCol;
   let xaCol = wbData.columnMapping.xaCol;
   let sttCol = wbData.columnMapping.sttCol ?? 0;
+  const headerRow = sheetData[wbData.headerRowIndex] || [];
 
   if (tinhCol === undefined || tinhCol === -1 || xaCol === undefined || xaCol === -1) {
-    const headerRow = sheetData[wbData.headerRowIndex] || [];
     tinhCol = headerRow.length;
     xaCol = headerRow.length + 1;
     headerRow[tinhCol] = 'TINH\n(Đã phiên)';
     headerRow[xaCol] = 'XA\n(Đã phiên)';
     sheetData[wbData.headerRowIndex] = headerRow;
+  }
+
+  // Column for "Địa chỉ 2 cấp" (Xã, Tỉnh không có mã)
+  let address2TierCol = -1;
+  if (options.includeAddress2Tier) {
+    for (let c = 0; c < headerRow.length; c++) {
+      const hNorm = normalizeText(String(headerRow[c] || ''));
+      if (
+        hNorm.includes('dia chi 2 cap') ||
+        hNorm.includes('diachi 2 cap') ||
+        hNorm === 'dia chi moi' ||
+        hNorm === 'dia chi chuan'
+      ) {
+        address2TierCol = c;
+        break;
+      }
+    }
+    if (address2TierCol === -1) {
+      address2TierCol = headerRow.length;
+      headerRow[address2TierCol] = 'Địa chỉ 2 cấp';
+      sheetData[wbData.headerRowIndex] = headerRow;
+    }
   }
 
   const dotKham = formatDotKham(options.dotKham);
@@ -804,12 +846,17 @@ export function exportInplaceFile(
       sheetData[targetRowIdx][sttCol] = String(pr.stt);
     }
 
-    // Tinh and Xa
+    // Tinh and Xa (with code)
     if (pr.resolvedTinh) {
       sheetData[targetRowIdx][tinhCol!] = pr.resolvedTinh;
     }
     if (pr.resolvedXa) {
       sheetData[targetRowIdx][xaCol!] = pr.resolvedXa;
+    }
+
+    // Địa chỉ 2 cấp (clean names without codes, e.g. "Phường Vĩnh Phúc, Tỉnh Phú Thọ")
+    if (options.includeAddress2Tier && address2TierCol >= 0) {
+      sheetData[targetRowIdx][address2TierCol] = pr.address2Tier || '';
     }
 
     // DOB formatting
@@ -947,6 +994,7 @@ export async function exportVncareTemplateFile(
     defaultJob?: string;
     defaultWorkplace?: string;
     defaultEthnicity?: string;
+    includeAddress2Tier?: boolean;
   } = {}
 ): Promise<Uint8Array> {
   const dotKham = formatDotKham(options.dotKham);
@@ -989,6 +1037,10 @@ export async function exportVncareTemplateFile(
     'DIACHI_BHYT',
   ];
 
+  if (options.includeAddress2Tier) {
+    headers.push('DIACHI_2CAP\n(Địa chỉ 2 cấp)');
+  }
+
   const rowsAoa: any[][] = [headers];
 
   processedRows.forEach((pr, i) => {
@@ -1012,7 +1064,7 @@ export async function exportVncareTemplateFile(
     const diachi = pr.rawAddress || '';
     const phone = mapping.phoneCol !== undefined && mapping.phoneCol >= 0 ? String(orig[mapping.phoneCol] || '').trim() : '';
 
-    rowsAoa.push([
+    const rowItem: any[] = [
       stt, // 0: STT
       name, // 1: TENBENHNHAN
       dob, // 2: NGAYSINH (DD/MM/YYYY)
@@ -1035,7 +1087,13 @@ export async function exportVncareTemplateFile(
       '', // 19: BHYT_KT
       '', // 20: MA_KCBBD
       '', // 21: DIACHI_BHYT
-    ]);
+    ];
+
+    if (options.includeAddress2Tier) {
+      rowItem.push(pr.address2Tier || '');
+    }
+
+    rowsAoa.push(rowItem);
   });
 
   const newDsSheet = XLSX.utils.aoa_to_sheet(rowsAoa);

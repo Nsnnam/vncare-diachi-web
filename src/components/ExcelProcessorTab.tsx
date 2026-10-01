@@ -34,6 +34,7 @@ import {
   downloadExcelFile,
   generateOutputFilename,
 } from '../services/excelService';
+import { extractCleanAdminName, formatAddress2Tier } from '../services/addressEngine';
 import { addOrUpdateCustomRule } from '../services/customDictService';
 import { PreviewTable } from './PreviewTable';
 import { UnmappedDrawer } from './UnmappedDrawer';
@@ -51,6 +52,7 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
 
   // Settings
   const [mode, setMode] = useState<ProcessingMode>('inplace');
+  const [includeAddress2Tier, setIncludeAddress2Tier] = useState<boolean>(true);
   const [mapping, setMapping] = useState<ColumnMapping>({ addressCol: -1 });
   const [dotKham, setDotKham] = useState<string>(() => {
     const d = new Date();
@@ -176,6 +178,9 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
         if (tinhCode && xaCode) {
           target.resolvedTinh = tinhCode;
           target.resolvedXa = xaCode;
+          target.resolvedTinhName = extractCleanAdminName(tinhCode);
+          target.resolvedXaName = extractCleanAdminName(xaCode);
+          target.address2Tier = formatAddress2Tier(xaCode, tinhCode);
           target.status = 'custom';
           target.resolutionType = 'custom_dict';
           target.method = 'Chỉnh sửa trực tiếp';
@@ -231,6 +236,9 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
             ...r,
             resolvedTinh: tinhCode,
             resolvedXa: xaCode,
+            resolvedTinhName: extractCleanAdminName(tinhCode),
+            resolvedXaName: extractCleanAdminName(xaCode),
+            address2Tier: formatAddress2Tier(xaCode, tinhCode),
             status: 'custom',
             resolutionType: 'custom_dict',
             method: 'Thư viện thủ công (Vừa lưu)',
@@ -250,7 +258,10 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
     setIsExporting(true);
     try {
       if (mode === 'inplace') {
-        const fileBytes = exportInplaceFile(wbData, processedRows, { dotKham });
+        const fileBytes = exportInplaceFile(wbData, processedRows, {
+          dotKham,
+          includeAddress2Tier,
+        });
         const nameWithoutExt = wbData.fileName.replace(/\.[^/.]+$/, '');
         const filename = generateOutputFilename(`${nameWithoutExt}_PhienDiaChi`);
         downloadExcelFile(fileBytes, filename);
@@ -259,6 +270,7 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
           dotKham,
           defaultJob,
           defaultWorkplace,
+          includeAddress2Tier,
         });
         const filename = generateOutputFilename('MauImportBenhNhan_VNCare');
         downloadExcelFile(fileBytes, filename);
@@ -554,6 +566,31 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
                 </div>
               </div>
 
+              {/* Option: Add 2-tier Address Column */}
+              <div className="pt-1">
+                <label className="flex items-start space-x-3 p-3 sm:p-3.5 rounded-xl border border-sky-200 bg-sky-50/60 hover:bg-sky-50/90 cursor-pointer transition-colors shadow-2xs">
+                  <input
+                    type="checkbox"
+                    checked={includeAddress2Tier}
+                    onChange={(e) => setIncludeAddress2Tier(e.target.checked)}
+                    className="w-4 h-4 text-sky-600 rounded border-slate-300 focus:ring-sky-500 mt-0.5 cursor-pointer"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 flex-wrap">
+                      <span className="font-bold text-slate-800 text-xs sm:text-sm">
+                        Thêm cột "Địa chỉ 2 cấp" vào file Excel xuất ra
+                      </span>
+                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full border border-emerald-300">
+                        Chỉ gồm Xã, Tỉnh (không có mã)
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                      Tự động điền cột <strong>"Địa chỉ 2 cấp"</strong> gồm thông tin xã và tỉnh sạch (Ví dụ: <code className="bg-white px-1.5 py-0.5 rounded border border-slate-200 text-emerald-700 font-semibold font-mono text-[11px]">Phường Vĩnh Phúc, Tỉnh Phú Thọ</code>) — tùy chỉnh hữu ích cho các file hợp đồng KSK, danh sách cán bộ ngoài mẫu chuẩn VNCare.
+                    </p>
+                  </div>
+                </label>
+              </div>
+
               {/* Quick Mapping & Options Accordion */}
               <div className="pt-2 border-t border-slate-100">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -817,6 +854,18 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
                 <span className="bg-black/20 px-2.5 py-0.5 rounded-md backdrop-blur-xs border border-white/15">
                   ✓ Đợt khám: {dotKham}
                 </span>
+                <button
+                  type="button"
+                  onClick={() => setIncludeAddress2Tier(!includeAddress2Tier)}
+                  className={`px-2.5 py-0.5 rounded-md backdrop-blur-xs border transition-all flex items-center space-x-1 cursor-pointer ${
+                    includeAddress2Tier
+                      ? 'bg-amber-400/30 text-amber-200 border-amber-300 font-bold'
+                      : 'bg-black/20 text-emerald-200/60 border-white/10'
+                  }`}
+                  title="Nhấp để bật/tắt cột Địa chỉ 2 cấp không kèm mã trong file xuất"
+                >
+                  <span>{includeAddress2Tier ? '✓' : '○'} Cột "Địa chỉ 2 cấp" (Xã, Tỉnh không mã)</span>
+                </button>
               </div>
             </div>
 
@@ -1114,7 +1163,7 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
                   {successCount}/{totalRows} dòng ({successRate}%)
                 </span>
                 <span className="text-slate-300 hidden sm:inline ml-1.5">
-                  · Đợt: {dotKham} · Times New Roman 13pt
+                  · Đợt: {dotKham} · Times New Roman 13pt {includeAddress2Tier && '· Kèm Địa chỉ 2 cấp'}
                 </span>
               </div>
             </div>

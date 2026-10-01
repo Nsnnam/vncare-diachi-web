@@ -88,10 +88,11 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
         const inName = (r.name || '').toLowerCase().includes(q);
         const inTinh = r.resolvedTinh.toLowerCase().includes(q);
         const inXa = r.resolvedXa.toLowerCase().includes(q);
+        const inAddr2Tier = (r.address2Tier || '').toLowerCase().includes(q);
         const inCccd = (r.cccdFormatted || '').toLowerCase().includes(q);
         const inMethod = (r.method || '').toLowerCase().includes(q);
         const inMissingCccd = (q.includes('cccd') || q.includes('thieu') || q.includes('thiếu')) && r.isCccdMissing;
-        if (!inAddr && !inName && !inTinh && !inXa && !inCccd && !inMethod && !inMissingCccd) return false;
+        if (!inAddr && !inName && !inTinh && !inXa && !inAddr2Tier && !inCccd && !inMethod && !inMissingCccd) return false;
       }
 
       return true;
@@ -276,7 +277,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                 1. Dữ liệu gốc đầu vào (Input)
               </th>
               <th
-                colSpan={6}
+                colSpan={7}
                 className="bg-emerald-100/90 text-emerald-900 text-center font-bold py-2 text-[11px] uppercase tracking-wider"
               >
                 2. Kết quả đối chiếu & Chuẩn hóa VNCare (Output)
@@ -299,6 +300,9 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
               <th scope="col" className="px-3 py-2 text-left w-44 bg-emerald-50/50 border-r border-slate-200">
                 Xã đã phiên (Cột M)
               </th>
+              <th scope="col" className="px-3 py-2 text-left w-48 bg-emerald-50/50 border-r border-slate-200" title="Địa chỉ 2 cấp không gồm mã số (Xã, Tỉnh)">
+                Địa chỉ 2 cấp (Không mã)
+              </th>
               <th scope="col" className="px-2.5 py-2 text-center w-36 bg-emerald-50/50 border-r border-slate-200">
                 CCCD chuẩn (12 số)
               </th>
@@ -317,7 +321,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
           <tbody className="divide-y divide-slate-100 bg-white">
             {paginatedRows.length === 0 ? (
               <tr>
-                <td colSpan={10} className="px-4 py-10 text-center text-slate-400 italic">
+                <td colSpan={11} className="px-4 py-10 text-center text-slate-400 italic">
                   Không tìm thấy dòng dữ liệu nào phù hợp với bộ lọc đối chiếu hiện tại.
                 </td>
               </tr>
@@ -424,6 +428,20 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                         </span>
                       ) : (
                         <span className="text-rose-500 font-medium italic">Chưa có</span>
+                      )}
+                    </td>
+
+                    {/* OUTPUT 2b: Địa chỉ 2 cấp (Không mã) */}
+                    <td className="px-3 py-2 bg-emerald-50/20 border-r border-slate-200 max-w-[200px]">
+                      {row.address2Tier ? (
+                        <div className="flex items-center space-x-1" title={row.address2Tier}>
+                          <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span className="font-semibold text-emerald-950 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-300 block truncate text-xs">
+                            {row.address2Tier}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 italic text-[11px]">Chưa xác định</span>
                       )}
                     </td>
 

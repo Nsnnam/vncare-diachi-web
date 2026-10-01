@@ -491,3 +491,38 @@ export function getCommunesForProvince(tinhNameOrCode: string): CommuneItem[] {
   }
   return COMMUNES_BY_PROV.get(name) || [];
 }
+
+/**
+ * Strip numeric code prefix from administrative unit name.
+ * e.g. "07900-Phường Vĩnh Phúc" -> "Phường Vĩnh Phúc"
+ * e.g. "25-Tỉnh Phú Thọ" -> "Tỉnh Phú Thọ"
+ * e.g. "Phường Vĩnh Phúc" -> "Phường Vĩnh Phúc"
+ */
+export function extractCleanAdminName(codeOrName: string): string {
+  if (!codeOrName) return '';
+  const trimmed = String(codeOrName).trim();
+  const dashIdx = trimmed.indexOf('-');
+  if (dashIdx !== -1) {
+    const prefix = trimmed.slice(0, dashIdx).trim();
+    if (/^\d+$/.test(prefix)) {
+      return trimmed.slice(dashIdx + 1).trim();
+    }
+  }
+  return trimmed;
+}
+
+/**
+ * Format 2-tier clean address string: "{Commune}, {Province}"
+ * e.g. "Phường Vĩnh Phúc, Tỉnh Phú Thọ"
+ */
+export function formatAddress2Tier(xaCodeOrName: string, tinhCodeOrName: string): string {
+  const xa = extractCleanAdminName(xaCodeOrName);
+  const tinh = extractCleanAdminName(tinhCodeOrName);
+  if (xa && tinh) {
+    return `${xa}, ${tinh}`;
+  }
+  if (xa) return xa;
+  if (tinh) return tinh;
+  return '';
+}
+

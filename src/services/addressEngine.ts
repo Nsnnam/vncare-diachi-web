@@ -512,12 +512,81 @@ export function extractCleanAdminName(codeOrName: string): string {
 }
 
 /**
- * Format 2-tier clean address string: "{Commune}, {Province}"
- * e.g. "Phường Vĩnh Phúc, Tỉnh Phú Thọ"
+ * Extract detail address prefix (house number, street, hamlet, village, alley) from raw address string.
+ * Strips the administrative units (commune, district, province) from the end.
  */
-export function formatAddress2Tier(xaCodeOrName: string, tinhCodeOrName: string): string {
+export function extractAddressDetail(
+  rawAddress: string,
+  xaCodeOrName?: string,
+  tinhCodeOrName?: string
+): string {
+  if (!rawAddress) return '';
+  const trimmed = rawAddress.trim();
+  const parts = trimmed.split(',').map((p) => p.trim()).filter(Boolean);
+  if (parts.length <= 1) {
+    return '';
+  }
+
+  const cleanXa = extractCleanAdminName(xaCodeOrName || '');
+  const normXa = normalizeText(cleanXa);
+
+  // Search for the commune part index
+  let xaIdx = -1;
+  for (let i = 0; i < parts.length; i++) {
+    const normPart = normalizeText(parts[i]);
+    if (normXa && (normPart === normXa || normPart.includes(normXa) || normXa.includes(normPart))) {
+      xaIdx = i;
+      break;
+    }
+    if (
+      normPart.startsWith('xa ') ||
+      normPart.startsWith('phuong ') ||
+      normPart.startsWith('thi tran ') ||
+      normPart.startsWith('p ') ||
+      normPart.startsWith('x ') ||
+      normPart.startsWith('tt ')
+    ) {
+      xaIdx = i;
+      break;
+    }
+  }
+
+  if (xaIdx > 0) {
+    return parts.slice(0, xaIdx).join(', ');
+  }
+
+  // Fallback: If 3 or more comma parts and last is province, return all parts before the last 2
+  if (parts.length >= 3) {
+    return parts.slice(0, parts.length - 2).join(', ');
+  }
+
+  return '';
+}
+
+/**
+ * Format 2-tier clean address string:
+ * - withDetail = false: "{Commune}, {Province}" (e.g. "Phường Vĩnh Phúc, Tỉnh Phú Thọ")
+ * - withDetail = true:  "{House/Hamlet/Street}, {Commune}, {Province}" (e.g. "Thôn Đông Thịnh, Xã Sơn Đông, Tỉnh Phú Thọ")
+ */
+export function formatAddress2Tier(
+  xaCodeOrName: string,
+  tinhCodeOrName: string,
+  rawAddress?: string,
+  withDetail: boolean = false
+): string {
   const xa = extractCleanAdminName(xaCodeOrName);
   const tinh = extractCleanAdminName(tinhCodeOrName);
+
+  if (withDetail && rawAddress) {
+    const detail = extractAddressDetail(rawAddress, xa, tinh);
+    if (detail) {
+      if (xa && tinh) return `${detail}, ${xa}, ${tinh}`;
+      if (xa) return `${detail}, ${xa}`;
+      if (tinh) return `${detail}, ${tinh}`;
+      return detail;
+    }
+  }
+
   if (xa && tinh) {
     return `${xa}, ${tinh}`;
   }

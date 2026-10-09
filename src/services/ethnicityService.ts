@@ -326,70 +326,136 @@ const ETHNICITY_ALIASES: Record<string, string> = {
   cil: '109-Cil',
 };
 
+export interface EthnicityResolveResult {
+  formatted: string;
+  raw: string;
+  isValid: boolean;
+  isMissing: boolean;
+  isUnresolved: boolean;
+}
+
 /**
- * Standardize any raw ethnicity string/code into official VNCare "Mã-Dân tộc" format
- * Examples:
- * - "Kinh" -> "25-Kinh"
- * - "Sán Dìu" -> "45-Sán Dìu"
- * - "45" -> "45-Sán Dìu"
- * - "45-Sán Dìu" -> "45-Sán Dìu"
- * - "Dao" -> "12-Dao"
- * - "Tày" -> "48-Tày"
- * - "Thái" -> "49-Thái"
- * - "Mường" -> "35-Mường"
- * - "H'Mông" -> "17-H mông"
- * - "Nùng" -> "37-Nùng"
- * - "" -> "25-Kinh"
+ * Standardize raw ethnicity string/code and return detailed validity status.
  */
-export function formatEthnicity(val: any, defaultEthnicity: string = '25-Kinh'): string {
-  if (val === undefined || val === null) return defaultEthnicity;
+export function resolveEthnicity(val: any, defaultEthnicity: string = '25-Kinh'): EthnicityResolveResult {
+  if (val === undefined || val === null) {
+    return {
+      formatted: defaultEthnicity,
+      raw: '',
+      isValid: false,
+      isMissing: true,
+      isUnresolved: false,
+    };
+  }
   const s = String(val).trim();
-  if (!s) return defaultEthnicity;
+  if (!s) {
+    return {
+      formatted: defaultEthnicity,
+      raw: '',
+      isValid: false,
+      isMissing: true,
+      isUnresolved: false,
+    };
+  }
 
   // 1. Check if input is already formatted as "Code-Name" or "Code - Name"
   const dashMatch = s.match(/^(\d+)\s*[-_.]\s*(.*)$/);
   if (dashMatch) {
     const code = dashMatch[1];
     if (CODE_TO_ETHNICITY.has(code)) {
-      return CODE_TO_ETHNICITY.get(code)!;
+      return {
+        formatted: CODE_TO_ETHNICITY.get(code)!,
+        raw: s,
+        isValid: true,
+        isMissing: false,
+        isUnresolved: false,
+      };
     }
-    // If code not in standard list, return the trimmed original
-    return s;
+    return {
+      formatted: s,
+      raw: s,
+      isValid: false,
+      isMissing: false,
+      isUnresolved: true,
+    };
   }
 
   // 2. Check if input is solely a numeric code (e.g. 25, 45, "25", "45")
   if (/^\d+$/.test(s)) {
     if (CODE_TO_ETHNICITY.has(s)) {
-      return CODE_TO_ETHNICITY.get(s)!;
+      return {
+        formatted: CODE_TO_ETHNICITY.get(s)!,
+        raw: s,
+        isValid: true,
+        isMissing: false,
+        isUnresolved: false,
+      };
     }
   }
 
   // 3. Exact match via normalized name (e.g. "san diu" -> "45-Sán Dìu")
   const norm = normalizeEthnicityKey(s);
   if (NAME_TO_ETHNICITY.has(norm)) {
-    return NAME_TO_ETHNICITY.get(norm)!;
+    return {
+      formatted: NAME_TO_ETHNICITY.get(norm)!,
+      raw: s,
+      isValid: true,
+      isMissing: false,
+      isUnresolved: false,
+    };
   }
 
   // 4. Exact match via aliases
   if (ETHNICITY_ALIASES[norm]) {
-    return ETHNICITY_ALIASES[norm];
+    return {
+      formatted: ETHNICITY_ALIASES[norm],
+      raw: s,
+      isValid: true,
+      isMissing: false,
+      isUnresolved: false,
+    };
   }
 
   // 5. Check if alias key is contained in normalized input (e.g. "dan toc san diu")
   for (const [alias, canonical] of Object.entries(ETHNICITY_ALIASES)) {
     if (norm.includes(alias)) {
-      return canonical;
+      return {
+        formatted: canonical,
+        raw: s,
+        isValid: true,
+        isMissing: false,
+        isUnresolved: false,
+      };
     }
   }
 
   // 6. Substring match against standard names (minimum 3 characters to avoid collisions)
   for (const [stdName, canonical] of NAME_TO_ETHNICITY.entries()) {
     if (stdName.length >= 3 && norm.includes(stdName)) {
-      return canonical;
+      return {
+        formatted: canonical,
+        raw: s,
+        isValid: true,
+        isMissing: false,
+        isUnresolved: false,
+      };
     }
   }
 
-  return defaultEthnicity;
+  return {
+    formatted: defaultEthnicity,
+    raw: s,
+    isValid: false,
+    isMissing: false,
+    isUnresolved: true,
+  };
+}
+
+/**
+ * Standardize any raw ethnicity string/code into official VNCare "Mã-Dân tộc" format
+ */
+export function formatEthnicity(val: any, defaultEthnicity: string = '25-Kinh'): string {
+  return resolveEthnicity(val, defaultEthnicity).formatted;
 }
 
 /** Extract clean name from "Mã-Dân tộc" (e.g. "45-Sán Dìu" -> "Sán Dìu") */

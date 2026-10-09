@@ -2,6 +2,20 @@
 
 Toàn bộ các thay đổi của dự án **VNCare Phiên Địa Chỉ 2 Cấp** được ghi nhận tại đây theo chuẩn [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.2.1] - 2026-10-09
+
+### Nâng cấp Tùy biến File & Quản lý Dân tộc
+- **Tùy biến Sheet & Cột phiên cho file không theo mẫu:**
+  - Tự động mở bảng cấu hình ánh xạ cột khi nạp các file hợp đồng KSK, danh sách CBNV tùy biến của đơn vị.
+  - Cho phép người dùng linh hoạt chọn Sheet cần xử lý và chọn các cột tương ứng: Cột Địa chỉ nguồn, Cột Dân tộc, Cột Họ và tên, Cột Ngày/Năm sinh, Cột Giới tính, Cột CCCD, Cột Nghề nghiệp, Cột Nơi làm việc, Cột SĐT.
+- **Tùy chọn Địa chỉ 2 cấp kèm chi tiết:**
+  - Bổ sung tùy chọn xuất cột **"Địa chỉ 2 cấp"** kèm chi tiết số nhà, thôn, xóm, đường + Xã + Tỉnh (ví dụ: `Thôn Đông Thịnh, Xã Sơn Đông, Tỉnh Phú Thọ` thay vì chỉ có `Xã Sơn Đông, Tỉnh Phú Thọ`).
+  - Đảm bảo hiển thị trực quan trên bảng đối chiếu và tích hợp vào cả file xuất trực tiếp (Chế độ 1) và file mẫu 7 sheet (Chế độ 2).
+- **Cảnh báo & Chuẩn hóa Mã Dân tộc chuẩn VNCare:**
+  - Tự động nhận diện và phiên mã dân tộc sang định dạng chuẩn `Mã-Dân tộc` (theo danh mục 65 dân tộc VNCare).
+  - Tích hợp cờ cảnh báo `isEthnicityMissing` (thiếu dân tộc) và `isEthnicityUnresolved` (dân tộc chưa khớp chuẩn).
+  - Bổ sung Thẻ thống kê Dân tộc và Băng cảnh báo màu hổ phách chuyên biệt, cho phép lọc nhanh danh sách người bệnh cần cập nhật dân tộc và sửa trực tiếp 1 chạm trên bảng.
+
 ## [1.2.0] - 2026-09-27
 
 ### Nâng cấp & Chuẩn hóa Nghiệp vụ Y tế VNCare

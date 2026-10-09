@@ -41,14 +41,14 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
   selectedFilter,
   onFilterChange
 }) => {
-  const [internalFilter, setInternalFilter] = useState<'all' | '3_tier' | '2_tier' | 'custom' | 'unresolved' | 'missing_cccd' | 'warning'>('all');
+  const [internalFilter, setInternalFilter] = useState<'all' | '3_tier' | '2_tier' | 'custom' | 'unresolved' | 'missing_cccd' | 'missing_ethnicity' | 'warning'>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(25);
 
   const activeFilter = (selectedFilter as any) || internalFilter;
 
-  const handleSetFilter = (f: 'all' | '3_tier' | '2_tier' | 'custom' | 'unresolved' | 'missing_cccd' | 'warning') => {
+  const handleSetFilter = (f: 'all' | '3_tier' | '2_tier' | 'custom' | 'unresolved' | 'missing_cccd' | 'missing_ethnicity' | 'warning') => {
     if (onFilterChange) {
       onFilterChange(f);
     } else {
@@ -71,6 +71,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
   const countCustom = rows.filter((r) => r.status === 'custom').length;
   const countUnresolved = rows.filter((r) => r.status === 'unresolved').length;
   const countMissingCccd = rows.filter((r) => r.isCccdMissing).length;
+  const countMissingEthnicity = rows.filter((r) => r.isEthnicityMissing || r.isEthnicityUnresolved).length;
   const countWarning = rows.filter((r) => r.isMissingMandatory).length;
 
   // Filtered rows
@@ -82,6 +83,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
       if (activeFilter === 'custom' && r.status !== 'custom') return false;
       if (activeFilter === 'unresolved' && r.status !== 'unresolved') return false;
       if (activeFilter === 'missing_cccd' && !r.isCccdMissing) return false;
+      if (activeFilter === 'missing_ethnicity' && !r.isEthnicityMissing && !r.isEthnicityUnresolved) return false;
       if (activeFilter === 'warning' && !r.isMissingMandatory) return false;
 
       // Search filter
@@ -98,7 +100,22 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
         const inCccd = (r.cccdFormatted || '').toLowerCase().includes(q);
         const inMethod = (r.method || '').toLowerCase().includes(q);
         const inMissingCccd = (q.includes('cccd') || q.includes('thieu') || q.includes('thiếu')) && r.isCccdMissing;
-        if (!inAddr && !inName && !inTinh && !inXa && !inAddr2Tier && !inEthnicity && !inCccd && !inMethod && !inMissingCccd) return false;
+        const inMissingEthnicity =
+          (q.includes('dan toc') || q.includes('dân tộc') || q.includes('dt')) &&
+          (r.isEthnicityMissing || r.isEthnicityUnresolved);
+        if (
+          !inAddr &&
+          !inName &&
+          !inTinh &&
+          !inXa &&
+          !inAddr2Tier &&
+          !inEthnicity &&
+          !inCccd &&
+          !inMethod &&
+          !inMissingCccd &&
+          !inMissingEthnicity
+        )
+          return false;
       }
 
       return true;
@@ -256,6 +273,20 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
             </button>
           )}
 
+          {countMissingEthnicity > 0 && (
+            <button
+              onClick={() => handleSetFilter('missing_ethnicity')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
+                activeFilter === 'missing_ethnicity'
+                  ? 'bg-amber-600 text-white shadow-xs'
+                  : 'bg-white text-amber-700 hover:bg-amber-50 border border-amber-200'
+              }`}
+            >
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+              <span>Thiếu/chưa khớp DT ({countMissingEthnicity})</span>
+            </button>
+          )}
+
           {countWarning > 0 && (
             <button
               onClick={() => handleSetFilter('warning')}
@@ -368,6 +399,16 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                             Thiếu CCCD
                           </span>
                         )}
+                        {row.isEthnicityMissing && (
+                          <span className="text-[9px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.2 rounded border border-amber-300 shrink-0" title="Chưa có thông tin Dân tộc trong file nạp">
+                            Thiếu DT
+                          </span>
+                        )}
+                        {row.isEthnicityUnresolved && (
+                          <span className="text-[9px] bg-rose-100 text-rose-800 font-bold px-1.5 py-0.2 rounded border border-rose-300 shrink-0" title={`Dân tộc "${row.rawEthnicity}" không nằm trong danh mục 65 dân tộc VNCare`}>
+                            DT chưa khớp
+                          </span>
+                        )}
                       </div>
                       {isEditing ? (
                         <div className="mt-1 space-y-1">
@@ -391,12 +432,30 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                         <div className="text-[10px] text-slate-500 flex items-center space-x-1.5 mt-0.5 flex-wrap gap-y-0.5">
                           <span>{row.genderFormatted}</span>
                           <span>•</span>
-                          <span
-                            className="font-medium text-emerald-800 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200"
-                            title={`Dân tộc chuẩn VNCare: ${row.ethnicityFormatted}${row.rawEthnicity ? ` (Đọc từ file: ${row.rawEthnicity})` : ''}`}
-                          >
-                            DT: {row.ethnicityFormatted}
-                          </span>
+                          {row.isEthnicityMissing ? (
+                            <span
+                              className="font-medium text-amber-800 bg-amber-100/90 px-1 py-0.2 rounded border border-amber-300 flex items-center space-x-1"
+                              title="File không có dân tộc hoặc bỏ trống - Tạm gán 25-Kinh"
+                            >
+                              <AlertTriangle className="w-2.5 h-2.5 text-amber-600 shrink-0" />
+                              <span>DT: {row.ethnicityFormatted} (Tạm gán)</span>
+                            </span>
+                          ) : row.isEthnicityUnresolved ? (
+                            <span
+                              className="font-medium text-rose-800 bg-rose-100/90 px-1 py-0.2 rounded border border-rose-300 flex items-center space-x-1"
+                              title={`Dân tộc trong file là "${row.rawEthnicity}", không nằm trong danh mục 65 DT - Tạm gán 25-Kinh`}
+                            >
+                              <AlertTriangle className="w-2.5 h-2.5 text-rose-600 shrink-0" />
+                              <span>DT: {row.ethnicityFormatted} (File: "{row.rawEthnicity}")</span>
+                            </span>
+                          ) : (
+                            <span
+                              className="font-medium text-emerald-800 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200"
+                              title={`Dân tộc chuẩn VNCare: ${row.ethnicityFormatted}${row.rawEthnicity ? ` (Đọc từ file: ${row.rawEthnicity})` : ''}`}
+                            >
+                              DT: {row.ethnicityFormatted}
+                            </span>
+                          )}
                         </div>
                       )}
                     </td>
@@ -469,13 +528,20 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                     </td>
 
                     {/* OUTPUT 2b: Địa chỉ 2 cấp (Không mã) */}
-                    <td className="px-3 py-2 bg-emerald-50/20 border-r border-slate-200 max-w-[200px]">
+                    <td className="px-3 py-2 bg-emerald-50/20 border-r border-slate-200 max-w-[220px]">
                       {row.address2Tier ? (
-                        <div className="flex items-center space-x-1" title={row.address2Tier}>
+                        <div className="flex items-center space-x-1.5" title={row.address2TierWithDetail || row.address2Tier}>
                           <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                          <span className="font-semibold text-emerald-950 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-300 block truncate text-xs">
-                            {row.address2Tier}
-                          </span>
+                          <div className="min-w-0">
+                            <span className="font-semibold text-emerald-950 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-300 block truncate text-xs">
+                              {row.address2TierWithDetail || row.address2Tier}
+                            </span>
+                            {row.address2TierWithDetail && row.address2TierWithDetail !== row.address2Tier && (
+                              <span className="text-[10px] text-emerald-700 block truncate mt-0.5" title={`2 cấp gốc: ${row.address2Tier}`}>
+                                2 cấp: {row.address2Tier}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       ) : (
                         <span className="text-slate-400 italic text-[11px]">Chưa xác định</span>

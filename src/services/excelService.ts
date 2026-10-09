@@ -9,7 +9,7 @@ import {
   formatAddress2Tier,
 } from './addressEngine';
 import { getCustomDictRules } from './customDictService';
-import { formatEthnicity, VNCARE_ETHNICITIES } from './ethnicityService';
+import { formatEthnicity, resolveEthnicity, VNCARE_ETHNICITIES } from './ethnicityService';
 
 export interface ParsedWorkbookData {
   workbook: any;
@@ -669,7 +669,10 @@ export function processAddressRows(
         : options.defaultWorkplace || '';
 
     const rawEthnicity = mapping.ethnicityCol !== undefined && mapping.ethnicityCol >= 0 ? row[mapping.ethnicityCol] : '';
-    const ethnicityFormatted = formatEthnicity(rawEthnicity, defaultEthnicity);
+    const ethRes = resolveEthnicity(rawEthnicity, defaultEthnicity);
+    const ethnicityFormatted = ethRes.formatted;
+    const isEthnicityMissing = ethRes.isMissing;
+    const isEthnicityUnresolved = ethRes.isUnresolved;
 
     const rawNation = mapping.nationCol !== undefined && mapping.nationCol >= 0 ? row[mapping.nationCol] : '';
     const nationFormatted = formatNation(rawNation);
@@ -682,7 +685,11 @@ export function processAddressRows(
     if (!dobFormatted || !isDobValid) missingFields.push('Ngày sinh');
     if (!genderFormatted) missingFields.push('Giới tính');
     if (!jobFormatted) missingFields.push('Nghề nghiệp');
-    if (!ethnicityFormatted) missingFields.push('Dân tộc');
+    if (isEthnicityMissing) {
+      missingFields.push('Dân tộc (Thiếu)');
+    } else if (isEthnicityUnresolved) {
+      missingFields.push('Dân tộc (Chưa nhận diện)');
+    }
     if (!nationFormatted) missingFields.push('Quốc gia');
     if (!rawAddress) missingFields.push('Địa chỉ');
     if (isCccdMissing) {
@@ -713,6 +720,8 @@ export function processAddressRows(
         workplaceFormatted,
         rawEthnicity: rawEthnicity !== undefined && rawEthnicity !== null ? String(rawEthnicity).trim() : '',
         ethnicityFormatted,
+        isEthnicityMissing,
+        isEthnicityUnresolved,
         nationFormatted,
         rawAddress: '',
         resolvedTinh: '',
@@ -720,6 +729,7 @@ export function processAddressRows(
         resolvedTinhName: '',
         resolvedXaName: '',
         address2Tier: '',
+        address2TierWithDetail: '',
         status: 'empty',
         resolutionType: 'empty',
         method: 'Địa chỉ trống',
@@ -738,7 +748,8 @@ export function processAddressRows(
     const resolvedXa = resolved.xaCode;
     const resolvedTinhName = resolved.tinhName || extractCleanAdminName(resolvedTinh);
     const resolvedXaName = resolved.xaName || extractCleanAdminName(resolvedXa);
-    const address2Tier = formatAddress2Tier(resolvedXa, resolvedTinh);
+    const address2Tier = formatAddress2Tier(resolvedXa, resolvedTinh, rawAddress, false);
+    const address2TierWithDetail = formatAddress2Tier(resolvedXa, resolvedTinh, rawAddress, true);
 
     results.push({
       rowIndex: idx,
@@ -760,6 +771,8 @@ export function processAddressRows(
       workplaceFormatted,
       rawEthnicity: rawEthnicity !== undefined && rawEthnicity !== null ? String(rawEthnicity).trim() : '',
       ethnicityFormatted,
+      isEthnicityMissing,
+      isEthnicityUnresolved,
       nationFormatted,
       rawAddress,
       resolvedTinh,
@@ -767,6 +780,7 @@ export function processAddressRows(
       resolvedTinhName,
       resolvedXaName,
       address2Tier,
+      address2TierWithDetail,
       status: resolved.status,
       resolutionType: resolved.resolutionType,
       method: resolved.method,
@@ -786,6 +800,7 @@ export function exportInplaceFile(
   options: {
     dotKham?: string;
     includeAddress2Tier?: boolean;
+    address2TierWithDetail?: boolean;
   } = {}
 ): Uint8Array {
   const originalWb = wbData.workbook;
@@ -822,7 +837,9 @@ export function exportInplaceFile(
     }
     if (address2TierCol === -1) {
       address2TierCol = headerRow.length;
-      headerRow[address2TierCol] = 'Địa chỉ 2 cấp';
+      headerRow[address2TierCol] = options.address2TierWithDetail
+        ? 'Địa chỉ 2 cấp (Kèm chi tiết)'
+        : 'Địa chỉ 2 cấp';
       sheetData[wbData.headerRowIndex] = headerRow;
     }
   }
@@ -849,9 +866,12 @@ export function exportInplaceFile(
       sheetData[targetRowIdx][xaCol!] = pr.resolvedXa;
     }
 
-    // Địa chỉ 2 cấp (clean names without codes, e.g. "Phường Vĩnh Phúc, Tỉnh Phú Thọ")
+    // Địa chỉ 2 cấp (clean names without codes, e.g. "Phường Vĩnh Phúc, Tỉnh Phú Thọ" or with detail)
     if (options.includeAddress2Tier && address2TierCol >= 0) {
-      sheetData[targetRowIdx][address2TierCol] = pr.address2Tier || '';
+      const val = options.address2TierWithDetail
+        ? pr.address2TierWithDetail || pr.address2Tier
+        : pr.address2Tier;
+      sheetData[targetRowIdx][address2TierCol] = val || '';
     }
 
     // DOB formatting
@@ -977,6 +997,7 @@ export async function exportVncareTemplateFile(
     defaultWorkplace?: string;
     defaultEthnicity?: string;
     includeAddress2Tier?: boolean;
+    address2TierWithDetail?: boolean;
   } = {}
 ): Promise<Uint8Array> {
   const dotKham = formatDotKham(options.dotKham);
@@ -1020,7 +1041,11 @@ export async function exportVncareTemplateFile(
   ];
 
   if (options.includeAddress2Tier) {
-    headers.push('DIACHI_2CAP\n(Địa chỉ 2 cấp)');
+    headers.push(
+      options.address2TierWithDetail
+        ? 'DIACHI_2CAP\n(Địa chỉ 2 cấp kèm chi tiết)'
+        : 'DIACHI_2CAP\n(Địa chỉ 2 cấp)'
+    );
   }
 
   const rowsAoa: any[][] = [headers];
@@ -1072,7 +1097,10 @@ export async function exportVncareTemplateFile(
     ];
 
     if (options.includeAddress2Tier) {
-      rowItem.push(pr.address2Tier || '');
+      const val = options.address2TierWithDetail
+        ? pr.address2TierWithDetail || pr.address2Tier
+        : pr.address2Tier;
+      rowItem.push(val || '');
     }
 
     rowsAoa.push(rowItem);

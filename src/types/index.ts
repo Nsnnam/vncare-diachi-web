@@ -95,6 +95,8 @@ export interface ProcessedRow {
   workplaceFormatted: string;
   rawEthnicity?: string;
   ethnicityFormatted: string;
+  isEthnicityMissing?: boolean;
+  isEthnicityUnresolved?: boolean;
   nationFormatted: string;
   rawAddress: string;
   resolvedTinh: string;
@@ -102,6 +104,7 @@ export interface ProcessedRow {
   resolvedTinhName?: string;
   resolvedXaName?: string;
   address2Tier?: string; // "Phường Vĩnh Phúc, Tỉnh Phú Thọ"
+  address2TierWithDetail?: string; // "Thôn Đông Thịnh, Xã Sơn Đông, Tỉnh Phú Thọ"
   status: ResolveStatus;
   resolutionType: ResolutionType;
   method: string;

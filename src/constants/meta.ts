@@ -1,8 +1,8 @@
 export const APP_META = {
   name: "VNCare Phiên Địa Chỉ 2 Cấp",
   appCode: "DIACHI",
-  version: "1.2.0",
-  releaseDate: "2026-09-27",
+  version: "1.3.0",
+  releaseDate: "2026-10-09",
   author: "Nguyễn Sơn Nam (Nsnnam / NamNS)",
   githubUrl: "https://github.com/Nsnnam/vncare-diachi-web",
   homeRepo: "Nsnnam/vncare-diachi-web",
@@ -19,6 +19,16 @@ export const APP_META = {
     qrPath: "coffee-qr.jpg",
   },
   changelog: [
+    {
+      version: "1.3.0",
+      date: "2026-10-09",
+      highlights: [
+        "Tùy biến Sheet & Cột phiên cho file không theo mẫu: Tự động mở bảng cấu hình ánh xạ cột khi nạp file hợp đồng KSK, danh sách CBNV ngoài mẫu VNCare; cho phép chọn Sheet và tùy chỉnh cột Địa chỉ, Dân tộc, Họ tên, Ngày sinh, CCCD, Nghề nghiệp, Nơi làm việc, SĐT.",
+        "Tùy chọn Địa chỉ 2 cấp kèm chi tiết: Cho phép xuất cột 'Địa chỉ 2 cấp' kèm chi tiết số nhà, thôn, xóm, đường + Xã + Tỉnh (ví dụ: 'Thôn Đông Thịnh, Xã Sơn Đông, Tỉnh Phú Thọ') thay vì chỉ có mỗi 'Xã Sơn Đông, Tỉnh Phú Thọ'.",
+        "Chuẩn hóa và Cảnh báo Mã Dân tộc: Tự động phiên mã dân tộc sang định dạng chuẩn 'Mã-Dân tộc' (65 dân tộc VNCare); gắn cờ cảnh báo người thiếu hoặc chưa khớp mã dân tộc; bổ sung thẻ thống kê, băng cảnh báo hổ phách và hỗ trợ sửa nhanh 1 chạm.",
+        "Giao diện trực quan cao cấp: Tối ưu typography font tiếng Việt Be Vietnam Pro, bảng đối chiếu 2 phần Input/Output rõ ràng, các bộ lọc chuyên biệt cho kiểm soát chất lượng dữ liệu KSK."
+      ]
+    },
     {
       version: "1.2.0",
       date: "2026-09-27",

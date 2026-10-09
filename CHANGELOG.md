@@ -2,9 +2,9 @@
 
 Toàn bộ các thay đổi của dự án **VNCare Phiên Địa Chỉ 2 Cấp** được ghi nhận tại đây theo chuẩn [Keep a Changelog](https://keepachangelog.com/).
 
-## [1.2.1] - 2026-10-09
+## [1.3.0] - 2026-10-09
 
-### Nâng cấp Tùy biến File & Quản lý Dân tộc
+### Nâng cấp Tùy biến File, Địa chỉ Kèm Chi tiết & Quản lý Dân tộc VNCare
 - **Tùy biến Sheet & Cột phiên cho file không theo mẫu:**
   - Tự động mở bảng cấu hình ánh xạ cột khi nạp các file hợp đồng KSK, danh sách CBNV tùy biến của đơn vị.
   - Cho phép người dùng linh hoạt chọn Sheet cần xử lý và chọn các cột tương ứng: Cột Địa chỉ nguồn, Cột Dân tộc, Cột Họ và tên, Cột Ngày/Năm sinh, Cột Giới tính, Cột CCCD, Cột Nghề nghiệp, Cột Nơi làm việc, Cột SĐT.

@@ -44,8 +44,8 @@ export const GuideTab: React.FC = () => {
             Dành cho các file danh sách hợp đồng KSK tùy ý của cơ quan, nhà máy (ví dụ <code>93 Hợp đồng KSK HBM 2026.xlsx</code>).
           </p>
           <ul className="text-xs text-slate-600 space-y-1.5 list-disc list-inside">
-            <li>Tự động nhận diện Họ tên, Ngày sinh, Giới tính, CCCD, Địa chỉ...</li>
-            <li>Phiên địa chỉ ra 2 cấp Tỉnh & Xã.</li>
+            <li>Tự động nhận diện Họ tên, Ngày sinh, Giới tính, CCCD, Địa chỉ, Dân tộc...</li>
+            <li>Phiên địa chỉ ra 2 cấp Tỉnh & Xã, chuẩn hóa Dân tộc sang dạng <code>Mã-Dân tộc</code> (ví dụ: <code>25-Kinh</code>, <code>45-Sán Dìu</code>, <code>12-Dao</code>, <code>48-Tày</code>...).</li>
             <li>Đổ toàn bộ dữ liệu vào khung mẫu chuẩn 7 sheets của VNCare (DANHSACH, TINH, XA, QUOCGIA, DANTOC, GIOITINH, NGHENGHIEP).</li>
             <li>File xuất ra sẵn sàng nạp thẳng vào cổng KSK toàn dân VNCare.</li>
           </ul>

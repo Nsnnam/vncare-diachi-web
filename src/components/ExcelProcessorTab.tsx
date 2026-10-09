@@ -35,6 +35,7 @@ import {
   generateOutputFilename,
 } from '../services/excelService';
 import { extractCleanAdminName, formatAddress2Tier } from '../services/addressEngine';
+import { formatEthnicity } from '../services/ethnicityService';
 import { addOrUpdateCustomRule } from '../services/customDictService';
 import { PreviewTable } from './PreviewTable';
 import { UnmappedDrawer } from './UnmappedDrawer';
@@ -169,7 +170,8 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
     tinhCode: string,
     xaCode: string,
     saveToDict: boolean = false,
-    newCccd?: string
+    newCccd?: string,
+    newEthnicity?: string
   ) => {
     setProcessedRows((prev) => {
       const updated = [...prev];
@@ -207,6 +209,10 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
           } else if (!cccdRes.isValid) {
             target.missingFields.push('CCCD (Sai định dạng)');
           }
+        }
+
+        if (newEthnicity !== undefined) {
+          target.ethnicityFormatted = formatEthnicity(newEthnicity, '25-Kinh');
         }
 
         // Recalculate mandatory missing

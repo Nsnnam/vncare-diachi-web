@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { ProcessedRow } from '../types';
 import { PROVINCES_LIST, getCommunesForProvince } from '../services/addressEngine';
+import { VNCARE_ETHNICITIES } from '../services/ethnicityService';
 
 interface PreviewTableProps {
   rows: ProcessedRow[];
@@ -27,7 +28,8 @@ interface PreviewTableProps {
     tinhCode: string,
     xaCode: string,
     saveDict?: boolean,
-    newCccd?: string
+    newCccd?: string,
+    newEthnicity?: string
   ) => void;
   selectedFilter?: string;
   onFilterChange?: (filter: string) => void;
@@ -60,6 +62,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
   const [editTinh, setEditTinh] = useState<string>('');
   const [editXa, setEditXa] = useState<string>('');
   const [editCccd, setEditCccd] = useState<string>('');
+  const [editEthnicity, setEditEthnicity] = useState<string>('');
   const [editSaveToDict, setEditSaveToDict] = useState<boolean>(true);
 
   // Statistics for filters
@@ -89,10 +92,13 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
         const inTinh = r.resolvedTinh.toLowerCase().includes(q);
         const inXa = r.resolvedXa.toLowerCase().includes(q);
         const inAddr2Tier = (r.address2Tier || '').toLowerCase().includes(q);
+        const inEthnicity =
+          (r.ethnicityFormatted || '').toLowerCase().includes(q) ||
+          (r.rawEthnicity || '').toLowerCase().includes(q);
         const inCccd = (r.cccdFormatted || '').toLowerCase().includes(q);
         const inMethod = (r.method || '').toLowerCase().includes(q);
         const inMissingCccd = (q.includes('cccd') || q.includes('thieu') || q.includes('thiếu')) && r.isCccdMissing;
-        if (!inAddr && !inName && !inTinh && !inXa && !inAddr2Tier && !inCccd && !inMethod && !inMissingCccd) return false;
+        if (!inAddr && !inName && !inTinh && !inXa && !inAddr2Tier && !inEthnicity && !inCccd && !inMethod && !inMissingCccd) return false;
       }
 
       return true;
@@ -112,6 +118,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
     setEditTinh(row.resolvedTinh || '');
     setEditXa(row.resolvedXa || '');
     setEditCccd(row.cccdFormatted || (row.rawCccd ? String(row.rawCccd) : ''));
+    setEditEthnicity(row.ethnicityFormatted || '25-Kinh');
     setEditSaveToDict(true);
   };
 
@@ -120,6 +127,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
     setEditTinh('');
     setEditXa('');
     setEditCccd('');
+    setEditEthnicity('');
   };
 
   const saveEdit = (row: ProcessedRow) => {
@@ -127,7 +135,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
       alert('Nếu chọn địa giới hành chính, vui lòng chọn đủ cả Tỉnh và Xã!');
       return;
     }
-    onUpdateRow(row.rowIndex, editTinh, editXa, editSaveToDict, editCccd);
+    onUpdateRow(row.rowIndex, editTinh, editXa, editSaveToDict, editCccd, editEthnicity);
     setEditingRowIndex(null);
   };
 
@@ -361,7 +369,36 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                           </span>
                         )}
                       </div>
-                      <div className="text-[10px] text-slate-400">{row.genderFormatted}</div>
+                      {isEditing ? (
+                        <div className="mt-1 space-y-1">
+                          <div className="text-[10px] text-slate-400">{row.genderFormatted}</div>
+                          <div>
+                            <span className="text-[9px] text-slate-500 font-semibold block">Dân tộc:</span>
+                            <select
+                              value={editEthnicity}
+                              onChange={(e) => setEditEthnicity(e.target.value)}
+                              className="w-full text-xs py-0.5 px-1 border border-sky-400 rounded bg-white font-medium"
+                            >
+                              {VNCARE_ETHNICITIES.map((eth) => (
+                                <option key={eth} value={eth}>
+                                  {eth}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-[10px] text-slate-500 flex items-center space-x-1.5 mt-0.5 flex-wrap gap-y-0.5">
+                          <span>{row.genderFormatted}</span>
+                          <span>•</span>
+                          <span
+                            className="font-medium text-emerald-800 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200"
+                            title={`Dân tộc chuẩn VNCare: ${row.ethnicityFormatted}${row.rawEthnicity ? ` (Đọc từ file: ${row.rawEthnicity})` : ''}`}
+                          >
+                            DT: {row.ethnicityFormatted}
+                          </span>
+                        </div>
+                      )}
                     </td>
 
                     {/* INPUT 3: Ngày sinh & CCCD gốc */}

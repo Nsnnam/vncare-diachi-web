@@ -9,6 +9,7 @@ import {
   formatAddress2Tier,
 } from './addressEngine';
 import { getCustomDictRules } from './customDictService';
+import { formatEthnicity, VNCARE_ETHNICITIES } from './ethnicityService';
 
 export interface ParsedWorkbookData {
   workbook: any;
@@ -295,7 +296,12 @@ export function detectColumns(rows: any[][]): {
     }
     if (
       mapping.ethnicityCol === -1 &&
-      (norm.includes('dantoc') || norm.includes('dan toc') || norm.includes('ethnic'))
+      (norm === 'dt' ||
+        norm === 'd t' ||
+        norm.includes('dantoc') ||
+        norm.includes('dan toc') ||
+        norm.includes('ethnic') ||
+        norm.includes('toc nguoi'))
     ) {
       mapping.ethnicityCol = idx;
     }
@@ -370,11 +376,14 @@ export async function readWorkbook(file: File): Promise<ParsedWorkbookData> {
   const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
 
   const sheetNames = workbook.SheetNames || [];
-  const activeSheet = sheetNames.includes('DANHSACH')
-    ? 'DANHSACH'
-    : sheetNames.includes('DANH SÁCH')
-    ? 'DANH SÁCH'
-    : sheetNames[0];
+  let activeSheet = sheetNames[0] || 'Sheet1';
+  for (const s of sheetNames) {
+    const n = normalizeText(s);
+    if (n === 'danhsach' || n === 'danh sach') {
+      activeSheet = s;
+      break;
+    }
+  }
 
   const worksheet = workbook.Sheets[activeSheet];
   const rows: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
@@ -599,22 +608,6 @@ export function formatJob(val: any, defaultJob: string = '6-Công nhân'): strin
   return defaultJob;
 }
 
-/** Format Ethnicity to VNCare standard catalogue */
-export function formatEthnicity(val: any, defaultEthnicity: string = '25-Kinh'): string {
-  if (!val) return defaultEthnicity;
-  const s = String(val).trim();
-  if (/^\d+-/.test(s)) return s;
-  const norm = normalizeText(s);
-  if (norm === 'kinh' || norm.includes('kinh')) return '25-Kinh';
-  if (norm.includes('tay')) return '50-Tày';
-  if (norm.includes('thai')) return '49-Thái';
-  if (norm.includes('muong')) return '39-Mường';
-  if (norm.includes('hmong') || norm.includes('h mong') || norm.includes('meo')) return '20-H Mông';
-  if (norm.includes('dao')) return '7-Dao';
-  if (norm.includes('nung')) return '42-Nùng';
-  return defaultEthnicity;
-}
-
 /** Format Nation to VNCare standard catalogue */
 export function formatNation(val: any): string {
   if (!val) return '0-Việt Nam';
@@ -718,6 +711,7 @@ export function processAddressRows(
         cccdPlaceFormatted,
         jobFormatted,
         workplaceFormatted,
+        rawEthnicity: rawEthnicity !== undefined && rawEthnicity !== null ? String(rawEthnicity).trim() : '',
         ethnicityFormatted,
         nationFormatted,
         rawAddress: '',
@@ -764,6 +758,7 @@ export function processAddressRows(
       cccdPlaceFormatted,
       jobFormatted,
       workplaceFormatted,
+      rawEthnicity: rawEthnicity !== undefined && rawEthnicity !== null ? String(rawEthnicity).trim() : '',
       ethnicityFormatted,
       nationFormatted,
       rawAddress,
@@ -945,20 +940,7 @@ function createVncareLookupWorkbook(): any {
   XLSX.utils.book_append_sheet(wb, wsQg, 'QUOCGIA');
 
   // Sheet DANTOC
-  const dtRows: any[][] = [
-    ['DANTOC'],
-    ['25-Kinh'],
-    ['1-Ba na'],
-    ['2-Bố Y'],
-    ['3-Brâu'],
-    ['4-Chăm'],
-    ['7-Dao'],
-    ['20-H Mông'],
-    ['39-Mường'],
-    ['42-Nùng'],
-    ['49-Thái'],
-    ['50-Tày'],
-  ];
+  const dtRows: any[][] = [['DANTOC'], ...VNCARE_ETHNICITIES.map((e) => [e])];
   const wsDt = XLSX.utils.aoa_to_sheet(dtRows);
   applyTimesNewRomanStyles(wsDt, dtRows, 0, []);
   XLSX.utils.book_append_sheet(wb, wsDt, 'DANTOC');

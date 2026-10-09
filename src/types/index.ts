@@ -93,6 +93,7 @@ export interface ProcessedRow {
   cccdPlaceFormatted: string;
   jobFormatted: string;
   workplaceFormatted: string;
+  rawEthnicity?: string;
   ethnicityFormatted: string;
   nationFormatted: string;
   rawAddress: string;

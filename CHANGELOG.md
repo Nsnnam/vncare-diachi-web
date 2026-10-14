@@ -2,6 +2,22 @@
 
 Toàn bộ các thay đổi của dự án **VNCare Phiên Địa Chỉ 2 Cấp** được ghi nhận tại đây theo chuẩn [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.3.1] - 2026-10-14
+
+### Khắc phục Lỗi Phiên Địa chỉ Viết tắt, Lỗi Đối soát 3 Cấp & Bảo toàn Workbook
+- **Nhận diện chuẩn xác từ khóa viết tắt Cột Địa chỉ (`ĐC`, `Đ/C`, `DC`, `D/C`):**
+  - Tự động nhận diện các cột địa chỉ có tiêu đề viết tắt phổ biến trong bảng lương và danh sách CBNV y tế như `ĐC`, `Đ/C`, `DC`, `D/C`, `ĐC thường trú`, `ĐC liên hệ`...
+  - Loại trừ tuyệt đối các cột Nơi cấp CCCD (`NOICAP`, `Nơi cấp`, `Cơ quan cấp`) để không bao giờ bị bắt nhầm thành cột địa chỉ.
+- **Sửa lỗi đối soát 3 cấp cũ & Chống gán nhầm sang `Xã Phùng Nguyên, Tỉnh Phú Thọ`:**
+  - Siết chặt ngưỡng điểm số đối soát 3 cấp cũ (`score >= 45`): bắt buộc phải có thông tin Huyện cũ hoặc Tỉnh cũ đi kèm với tên Xã cũ, ngăn chặn hiện tượng cụm từ 2 chữ cái ngẫu nhiên bị khớp bừa.
+  - Bổ sung bộ lọc cơ quan cấp giấy tờ (`Cục cảnh sát`, `Bộ công an`, `Công an tỉnh`, `trật tự xã hội`...), khắc phục triệt để lỗi chuỗi Nơi cấp CCCD bị gán nhầm thành `Xã Tứ Xã → Xã Phùng Nguyên, Tỉnh Phú Thọ`.
+- **Khắc phục lỗi Nhân đôi / Nhân ba cột khi xuất file:**
+  - Áp dụng cơ chế **Isolated Workbook Clone**: mỗi lần xuất file đều clone từ `originalBuffer` nguyên bản, không bao giờ mutate biến dạng đối tượng workbook trong React state.
+  - Kiểm tra và tái sử dụng cột `TINH`, `XA`, `Địa chỉ 2 cấp` đã có trước đó trong bảng, loại bỏ hoàn toàn hiện tượng sinh thêm các cột lặp lại ở cuối bảng khi bấm xuất hoặc thao tác nhiều lần.
+- **Khắc phục cảnh báo hỏng file Excel (Removed Records: Formula):**
+  - Tự động phát hiện và dọn dẹp các liên kết công thức ngoài bị gãy (`broken external link formulas` chứa `[...]`) trên toàn bộ các sheet của file gốc.
+  - Bảo toàn 100% giá trị dữ liệu chữ và số của các sheet liên quan, loại bỏ hoàn toàn hộp thoại cảnh báo lỗi corrupt workbook của Microsoft Excel khi mở file xuất ra.
+
 ## [1.3.0] - 2026-10-09
 
 ### Nâng cấp Tùy biến File, Địa chỉ Kèm Chi tiết & Quản lý Dân tộc VNCare

@@ -21,6 +21,7 @@ export interface ParsedWorkbookData {
   dataRows: any[][];
   columnMapping: ColumnMapping;
   isVncareTemplate: boolean;
+  originalBuffer?: ArrayBuffer;
 }
 
 /** Standard Styling Constants conforming to User Specification */
@@ -152,12 +153,36 @@ function applyTimesNewRomanStyles(
 /** Detect if string matches address keywords */
 function isAddressHeader(header: string): boolean {
   const norm = normalizeText(header);
+  // Exclude ID card issuance place (Nơi cấp CCCD)
+  if (
+    norm.includes('noicap') ||
+    norm.includes('noi cap') ||
+    norm.includes('co quan cap') ||
+    norm.includes('don vi cap')
+  ) {
+    return false;
+  }
   return (
+    norm === 'dc' ||
+    norm === 'd c' ||
+    norm === 'đc' ||
+    norm === 'đ c' ||
+    norm === 'd/c' ||
+    norm === 'đ/c' ||
+    norm.startsWith('dc ') ||
+    norm.startsWith('đc ') ||
+    norm.startsWith('d/c ') ||
+    norm.startsWith('đ/c ') ||
+    norm.endsWith(' dc') ||
+    norm.endsWith(' đc') ||
     norm.includes('diachi') ||
     norm.includes('dia chi') ||
     norm.includes('noi o') ||
     norm.includes('thuong tru') ||
-    norm.includes('cu tru')
+    norm.includes('cu tru') ||
+    norm.includes('dia ban') ||
+    norm.includes('ho khau') ||
+    norm.includes('que quan')
   );
 }
 
@@ -168,7 +193,9 @@ function isTinhHeader(header: string): boolean {
     norm === 'tinh' ||
     norm.includes('tinh tp') ||
     norm.includes('ma tinh') ||
-    norm.includes('thanh pho')
+    norm.includes('thanh pho') ||
+    norm.includes('tinh da phien') ||
+    norm.includes('tinh (da phien)')
   );
 }
 
@@ -179,7 +206,9 @@ function isXaHeader(header: string): boolean {
     norm === 'xa' ||
     norm.includes('phuong') ||
     norm.includes('ma xa') ||
-    norm.includes('xa phuong')
+    norm.includes('xa phuong') ||
+    norm.includes('xa da phien') ||
+    norm.includes('xa (da phien)')
   );
 }
 
@@ -197,10 +226,19 @@ export function detectColumns(rows: any[][]): {
     const row = rows[r];
     if (!row) continue;
     const rowStr = row.map((c) => String(c || '').toLowerCase()).join(' ');
+    const rowNorm = normalizeText(rowStr);
     if (
-      rowStr.includes('diachi') ||
-      rowStr.includes('địa chỉ') ||
-      (rowStr.includes('stt') && (rowStr.includes('tên') || rowStr.includes('ten') || rowStr.includes('họ và tên')))
+      rowNorm.includes('diachi') ||
+      rowNorm.includes('dia chi') ||
+      rowStr.includes('đc') ||
+      rowStr.includes('dc') ||
+      (rowNorm.includes('stt') &&
+        (rowNorm.includes('ten') ||
+          rowNorm.includes('ho ten') ||
+          rowNorm.includes('ho va ten') ||
+          rowNorm.includes('hovaten') ||
+          rowNorm.includes('nguoi benh') ||
+          rowNorm.includes('benh nhan')))
     ) {
       headerRowIndex = r;
       headers = row.map((c) => String(c || '').trim());
@@ -403,6 +441,7 @@ export async function readWorkbook(file: File): Promise<ParsedWorkbookData> {
     dataRows,
     columnMapping: mapping,
     isVncareTemplate: isVncare,
+    originalBuffer: buffer,
   };
 }
 
@@ -424,6 +463,7 @@ export function switchSheet(wbData: ParsedWorkbookData, newSheetName: string): P
     dataRows,
     columnMapping: mapping,
     isVncareTemplate: isVncare,
+    originalBuffer: wbData.originalBuffer,
   };
 }
 
@@ -803,8 +843,24 @@ export function exportInplaceFile(
     address2TierWithDetail?: boolean;
   } = {}
 ): Uint8Array {
-  const originalWb = wbData.workbook;
-  const sheet = originalWb.Sheets[wbData.activeSheet];
+  // Always create an isolated working workbook clone so we never mutate the active React state workbook
+  let workingWb: any;
+  if (wbData.originalBuffer) {
+    workingWb = XLSX.read(wbData.originalBuffer.slice(0), {
+      type: 'array',
+      cellDates: true,
+      cellStyles: true,
+    });
+  } else {
+    const rawArr = XLSX.write(wbData.workbook, { bookType: 'xlsx', type: 'array' });
+    workingWb = XLSX.read(rawArr, {
+      type: 'array',
+      cellDates: true,
+      cellStyles: true,
+    });
+  }
+
+  const sheet = workingWb.Sheets[wbData.activeSheet];
   const sheetData: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
 
   let tinhCol = wbData.columnMapping.tinhCol;
@@ -812,6 +868,28 @@ export function exportInplaceFile(
   let sttCol = wbData.columnMapping.sttCol ?? 0;
   const headerRow = sheetData[wbData.headerRowIndex] || [];
 
+  // Check if headerRow already has TINH or XA columns before appending new ones
+  if (tinhCol === undefined || tinhCol === -1) {
+    for (let c = 0; c < headerRow.length; c++) {
+      const hNorm = normalizeText(String(headerRow[c] || ''));
+      if (hNorm.includes('tinh da phien') || hNorm === 'tinh' || hNorm.startsWith('tinh')) {
+        tinhCol = c;
+        break;
+      }
+    }
+  }
+
+  if (xaCol === undefined || xaCol === -1) {
+    for (let c = 0; c < headerRow.length; c++) {
+      const hNorm = normalizeText(String(headerRow[c] || ''));
+      if (hNorm.includes('xa da phien') || hNorm === 'xa' || hNorm.startsWith('xa') || hNorm.includes('phuong')) {
+        xaCol = c;
+        break;
+      }
+    }
+  }
+
+  // Only allocate new columns at the end if not existing
   if (tinhCol === undefined || tinhCol === -1 || xaCol === undefined || xaCol === -1) {
     tinhCol = headerRow.length;
     xaCol = headerRow.length + 1;
@@ -913,6 +991,11 @@ export function exportInplaceFile(
   // Re-encode worksheet
   const newSheet = XLSX.utils.aoa_to_sheet(sheetData);
 
+  // Preserve any merged cells from original sheet if present
+  if (sheet['!merges']) {
+    newSheet['!merges'] = sheet['!merges'];
+  }
+
   // Apply Times New Roman 13, Borders, Auto-fit rows and columns, Text general format
   applyTimesNewRomanStyles(newSheet, sheetData, wbData.headerRowIndex, [
     sttCol,
@@ -923,9 +1006,23 @@ export function exportInplaceFile(
     wbData.columnMapping.dotKhamCol ?? -1,
   ]);
 
-  originalWb.Sheets[wbData.activeSheet] = newSheet;
+  workingWb.Sheets[wbData.activeSheet] = newSheet;
 
-  const out = XLSX.write(originalWb, { bookType: 'xlsx', type: 'array' });
+  // Clean broken external link formulas (containing '[') across all sheets to prevent Excel XML recovery/corruption errors
+  for (const sName of workingWb.SheetNames) {
+    const ws = workingWb.Sheets[sName];
+    if (!ws) continue;
+    for (const cellRef in ws) {
+      if (cellRef.startsWith('!')) continue;
+      const cell = ws[cellRef];
+      if (cell && cell.f && cell.f.includes('[')) {
+        // Remove external formula reference, keeping calculated text/number display value intact
+        delete cell.f;
+      }
+    }
+  }
+
+  const out = XLSX.write(workingWb, { bookType: 'xlsx', type: 'array' });
   return new Uint8Array(out);
 }
 

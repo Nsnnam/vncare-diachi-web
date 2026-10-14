@@ -402,10 +402,34 @@ export function resolveAddress(
     }
   }
 
+  // Safety check: Filter out administrative/police authorities mistakenly passed as address
+  if (
+    norm.includes('cuc canh sat') ||
+    norm.includes('bo cong an') ||
+    norm.includes('cong an tinh') ||
+    norm.includes('cong an thanh pho') ||
+    norm.includes('cong an huyen') ||
+    norm.includes('cong an quan') ||
+    norm.includes('cuc qlhc') ||
+    norm.includes('trat tu xa hoi')
+  ) {
+    return {
+      status: 'unresolved',
+      resolutionType: 'unresolved',
+      tinhCode: '',
+      xaCode: '',
+      tinhName: '',
+      xaName: '',
+      method: 'Cơ quan cấp giấy tờ (Không phải địa chỉ cư trú)',
+      confidence: 0,
+    };
+  }
+
   if (oldCandidates.length > 0) {
     oldCandidates.sort((a, b) => b.score - a.score);
     const top = oldCandidates[0];
-    if (top.score >= 35 || (oldCandidates.length === 1 && top.score >= 15)) {
+    // Strict requirement: Must have at least District or Province match alongside Commune (score >= 45)
+    if (top.score >= 45) {
       return {
         status: 'resolved',
         resolutionType: '3_tier_conversion',

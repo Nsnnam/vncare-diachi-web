@@ -1,8 +1,8 @@
 export const APP_META = {
   name: "VNCare Phiên Địa Chỉ 2 Cấp",
   appCode: "DIACHI",
-  version: "1.3.0",
-  releaseDate: "2026-10-09",
+  version: "1.3.1",
+  releaseDate: "2026-10-14",
   author: "Nguyễn Sơn Nam (Nsnnam / NamNS)",
   githubUrl: "https://github.com/Nsnnam/vncare-diachi-web",
   homeRepo: "Nsnnam/vncare-diachi-web",
@@ -19,6 +19,16 @@ export const APP_META = {
     qrPath: "coffee-qr.jpg",
   },
   changelog: [
+    {
+      version: "1.3.1",
+      date: "2026-10-14",
+      highlights: [
+        "Khắc phục triệt để lỗi nhận diện cột Địa chỉ: Tự động nhận diện chuẩn xác các từ viết tắt phổ biến 'ĐC', 'Đ/C', 'DC', 'D/C'; đồng thời loại trừ triệt để các cột Nơi cấp CCCD (NOICAP) tránh chọn nhầm.",
+        "Sửa lỗi đối soát 3 cấp cũ: Siết chặt ngưỡng điểm số đối soát (bắt buộc có Huyện hoặc Tỉnh đi kèm) và bổ sung bộ lọc cơ quan cấp giấy tờ, khắc phục hoàn toàn lỗi cụm từ 'trật tự xã hội' bị phiên nhầm thành 'Xã Phùng Nguyên, Tỉnh Phú Thọ'.",
+        "Khắc phục lỗi nhân đôi / nhân ba cột khi xuất file: Cơ chế Isolated Workbook Clone và nhận diện cột đã tồn tại giúp file xuất ra chỉ chứa đúng 1 bộ cột TINH, XA, Địa chỉ 2 cấp kể cả khi phiên nhiều lần.",
+        "Khắc phục lỗi hỏng công thức Excel (Corrupt Workbook): Tự động dọn dẹp các liên kết ngoài bị gãy (broken external link formulas) trên toàn bộ các sheet, giữ nguyên 100% dữ liệu hiển thị và loại bỏ hoàn toàn cảnh báo 'Removed Records: Formula' của Microsoft Excel."
+      ]
+    },
     {
       version: "1.3.0",
       date: "2026-10-09",

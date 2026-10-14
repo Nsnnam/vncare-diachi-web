@@ -1,8 +1,8 @@
-# VNCare Phiên Địa Chỉ 2 Cấp (Web & Offline v1.3.0)
+# VNCare Phiên Địa Chỉ 2 Cấp (Web & Offline v1.3.1)
 
 > **Công cụ tự động nhận diện, phân tích và phiên mã địa chỉ hành chính 2 cấp (Tỉnh/TP và Xã/Phường), chuyển đổi địa chỉ 3 cấp cũ sang chuẩn VNCare / VNPT-HIS từ file Excel. Hoạt động 100% Offline bảo mật dữ liệu y tế, chuẩn hóa định dạng Times New Roman 13pt, quản lý 65 dân tộc và tùy biến cột linh hoạt.**
 
-[![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)](https://github.com/Nsnnam/vncare-diachi-web)
+[![Version](https://img.shields.io/badge/version-1.3.1-blue.svg)](https://github.com/Nsnnam/vncare-diachi-web)
 [![Offline First](https://img.shields.io/badge/offline--first-100%25-emerald.svg)](https://nsnnam.github.io/vncare-diachi-web/)
 [![Standard](https://img.shields.io/badge/standard-NSN_App_Standard-indigo.svg)](https://github.com/Nsnnam)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -10,24 +10,40 @@
 
 ---
 
-## Bảng Thông Tin Phát Hành (v1.3.0)
+## Bảng Thông Tin Phát Hành (v1.3.1)
 
 | Thông tin | Chi tiết |
 |---|---|
-| **Phiên bản hiện tại** | `v1.3.0` |
-| **Ngày cập nhật** | 09/10/2026 |
+| **Phiên bản hiện tại** | `v1.3.1` |
+| **Ngày cập nhật** | 14/10/2026 |
 | **Tác giả** | [Nguyễn Sơn Nam (Nsnnam / NamNS)](https://github.com/Nsnnam) |
 | **Múi giờ chuẩn** | GMT+7 (`Asia/Ho_Chi_Minh`) |
 | **Kho mã nguồn** | [https://github.com/Nsnnam/vncare-diachi-web](https://github.com/Nsnnam/vncare-diachi-web) |
 | **Trang trực tuyến (Live)** | [https://nsnnam.github.io/vncare-diachi-web/](https://nsnnam.github.io/vncare-diachi-web/) |
-| **Bản chạy Offline Single-file HTML** | [`releases/vncare-diachi-web-v1.3.0-offline.html`](./releases/vncare-diachi-web-v1.3.0-offline.html) *(Mở trực tiếp trên Chrome, Edge, Cốc Cốc không cần mạng)* |
+| **Bản chạy Offline Single-file HTML** | [`releases/vncare-diachi-web-v1.3.1-offline.html`](./releases/vncare-diachi-web-v1.3.1-offline.html) *(Mở trực tiếp trên Chrome, Edge, Cốc Cốc không cần mạng)* |
 | **Font giao diện** | **Be Vietnam Pro** (Thiết kế tối ưu tiếng Việt) |
 | **Font file Excel xuất ra** | **Times New Roman 13pt**, kẻ ô viền (borders), giãn dòng theo nội dung |
 | **Mật mã mở khóa mặc định** | `namns` (mã băm SHA-256 an toàn) |
 
 ---
 
-## Các Tính Năng Nổi Bật của Phiên Bản v1.3.0
+## Các Tính Năng & Sửa Lỗi Nổi Bật của Phiên Bản v1.3.1
+
+### 1. Nhận diện tự động cột Địa chỉ viết tắt (`ĐC`, `Đ/C`, `DC`, `D/C`)
+- Tự động nhận diện chính xác các cột địa chỉ có tiêu đề viết tắt như `ĐC`, `Đ/C`, `DC`, `D/C`, `ĐC thường trú` trong các bảng danh sách CBNV, hợp đồng KSK.
+- Tự động loại trừ triệt để các cột Nơi cấp CCCD (`NOICAP`, `Nơi cấp`, `Cơ quan cấp`), chống hiện tượng chọn nhầm làm địa chỉ.
+
+### 2. Khắc phục triệt để lỗi đối soát 3 cấp cũ và lỗi gán nhầm sang `Xã Phùng Nguyên, Tỉnh Phú Thọ`
+- Siết chặt điều kiện khớp 3 cấp cũ (`score >= 45`): bắt buộc phải có thông tin Huyện cũ hoặc Tỉnh cũ đi kèm tên Xã cũ, ngăn chặn hiện tượng cụm từ ngẫu nhiên bị khớp bừa.
+- Tích hợp bộ lọc cơ quan cấp giấy tờ (`Cục cảnh sát quản lý hành chính về trật tự xã hội`, `Bộ công an`...), không để cụm từ "trật tự xã hội" bị bắt nhầm thành "Xã Tứ Xã -> Xã Phùng Nguyên".
+
+### 3. Cơ chế Isolated Workbook Clone chống nhân đôi / nhân ba cột
+- Mỗi lần xuất file đều clone từ `originalBuffer` nguyên bản, không làm biến đổi (mutate) workbook đang giữ trong React state.
+- Tự động kiểm tra và tái sử dụng cột `TINH`, `XA`, `Địa chỉ 2 cấp` đã có sẵn trong bảng, xóa bỏ hoàn toàn lỗi lặp cột ở cuối bảng khi bấm xuất nhiều lần.
+
+### 4. Loại bỏ hoàn toàn lỗi hỏng file Excel (Removed Records: Formula)
+- Tự động dọn dẹp các liên kết công thức ngoài bị gãy (`broken external formulas`) trên toàn bộ các sheet của file Excel gốc khi xuất.
+- Giữ nguyên 100% dữ liệu hiển thị, bảo đảm mở file mượt mà trên Microsoft Excel mà không gặp bất kỳ thông báo lỗi sửa chữa file nào.
 
 ### 1. Tùy biến Sheet & Cột phiên cho file ngoài mẫu (Hợp đồng KSK, CBNV)
 - Khi nạp các file hợp đồng KSK của đơn vị, nhà máy, cơ quan (không phải phôi mẫu VNCare chuẩn), bảng cấu hình ánh xạ cột **tự động mở ra**.

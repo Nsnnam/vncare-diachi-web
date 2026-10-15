@@ -337,7 +337,7 @@ export interface EthnicityResolveResult {
 /**
  * Standardize raw ethnicity string/code and return detailed validity status.
  */
-export function resolveEthnicity(val: any, defaultEthnicity: string = '25-Kinh'): EthnicityResolveResult {
+export function resolveEthnicity(val: any, defaultEthnicity: string = '99-Nước ngoài'): EthnicityResolveResult {
   if (val === undefined || val === null) {
     return {
       formatted: defaultEthnicity,
@@ -372,7 +372,7 @@ export function resolveEthnicity(val: any, defaultEthnicity: string = '25-Kinh')
       };
     }
     return {
-      formatted: s,
+      formatted: defaultEthnicity,
       raw: s,
       isValid: false,
       isMissing: false,
@@ -454,7 +454,7 @@ export function resolveEthnicity(val: any, defaultEthnicity: string = '25-Kinh')
 /**
  * Standardize any raw ethnicity string/code into official VNCare "Mã-Dân tộc" format
  */
-export function formatEthnicity(val: any, defaultEthnicity: string = '25-Kinh'): string {
+export function formatEthnicity(val: any, defaultEthnicity: string = '99-Nước ngoài'): string {
   return resolveEthnicity(val, defaultEthnicity).formatted;
 }
 

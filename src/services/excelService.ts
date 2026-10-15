@@ -670,7 +670,7 @@ export function processAddressRows(
   const results: ProcessedRow[] = [];
 
   const defaultJob = options.defaultJob || '6-Công nhân';
-  const defaultEthnicity = options.defaultEthnicity || '25-Kinh';
+  const defaultEthnicity = options.defaultEthnicity || '99-Nước ngoài';
 
   dataRows.forEach((row, idx) => {
     // Sequential STT is numbered consecutively from 1 to N
@@ -1099,7 +1099,7 @@ export async function exportVncareTemplateFile(
 ): Promise<Uint8Array> {
   const dotKham = formatDotKham(options.dotKham);
   const defaultJob = options.defaultJob || '6-Công nhân';
-  const defaultEthnicity = options.defaultEthnicity || '25-Kinh';
+  const defaultEthnicity = options.defaultEthnicity || '99-Nước ngoài';
 
   let templateWb: any;
   try {

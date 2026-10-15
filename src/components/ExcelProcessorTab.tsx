@@ -35,7 +35,7 @@ import {
   generateOutputFilename,
 } from '../services/excelService';
 import { extractCleanAdminName, formatAddress2Tier } from '../services/addressEngine';
-import { formatEthnicity } from '../services/ethnicityService';
+import { formatEthnicity, resolveEthnicity } from '../services/ethnicityService';
 import { addOrUpdateCustomRule } from '../services/customDictService';
 import { PreviewTable } from './PreviewTable';
 import { UnmappedDrawer } from './UnmappedDrawer';
@@ -215,7 +215,17 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
         }
 
         if (newEthnicity !== undefined) {
-          target.ethnicityFormatted = formatEthnicity(newEthnicity, '25-Kinh');
+          target.rawEthnicity = newEthnicity;
+          const ethRes = resolveEthnicity(newEthnicity, '99-Nước ngoài');
+          target.ethnicityFormatted = ethRes.formatted;
+          target.isEthnicityMissing = ethRes.isMissing;
+          target.isEthnicityUnresolved = ethRes.isUnresolved;
+          target.missingFields = target.missingFields.filter((f) => !f.startsWith('Dân tộc'));
+          if (ethRes.isMissing) {
+            target.missingFields.push('Dân tộc (Thiếu)');
+          } else if (ethRes.isUnresolved) {
+            target.missingFields.push('Dân tộc (Chưa khớp)');
+          }
         }
 
         // Recalculate mandatory missing
@@ -1319,7 +1329,7 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
                       </span>
                     </div>
                     <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
-                      Để đảm bảo chuẩn hoá khi nạp cổng VNCare, hệ thống tạm gán mặc định <strong>"25-Kinh"</strong> khi xuất file. Quý đơn vị có thể bấm nút <strong>"Sửa"</strong> tại từng dòng ở bảng bên dưới để chọn đúng trong danh mục 65 dân tộc.
+                      Để đảm bảo chuẩn hoá khi nạp cổng VNCare, hệ thống tự động gán mặc định <strong>"99-Nước ngoài"</strong> khi xuất file (nếu không chỉnh sửa). Quý đơn vị có thể bấm nút <strong>"Sửa"</strong> tại từng dòng ở bảng bên dưới để chọn đúng trong danh mục 65 dân tộc.
                     </p>
                   </div>
                 </div>

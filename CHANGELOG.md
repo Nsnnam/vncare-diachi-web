@@ -2,6 +2,18 @@
 
 Toàn bộ các thay đổi của dự án **VNCare Phiên Địa Chỉ 2 Cấp** được ghi nhận tại đây theo chuẩn [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.3.2] - 2026-10-15
+
+### Chuẩn hóa Dân tộc Mặc định & Cảnh báo Tương tác Chỉnh sửa 1 chạm
+- **Mặc định khi phiên là `99-Nước ngoài` cho các dân tộc không nhận diện được:**
+  - Đối với các trường hợp dữ liệu thiếu/bỏ trống Dân tộc hoặc chuỗi dân tộc không nằm trong danh mục 65 dân tộc chuẩn VNCare, hệ thống sẽ tự động gán giá trị xuất file mặc định là **`99-Nước ngoài`** (nếu người dùng không chỉnh sửa).
+  - Bảo toàn giá trị chuỗi gốc đọc từ file trong bảng xem trước để nhân viên y tế đối chiếu và nhận diện nhanh.
+- **Hiện cảnh báo nổi bật & Cho phép chỉnh sửa linh hoạt:**
+  - Tích hợp cảnh báo đa tầng: Băng cảnh báo màu hổ phách chuyên biệt, Thẻ thống kê Dân tộc thiếu/chưa khớp, Badge cảnh báo trực quan tại từng dòng dữ liệu.
+  - Cho phép **nhấp trực tiếp vào huy hiệu cảnh báo Dân tộc** trên Bảng đối chiếu để mở danh mục 65 dân tộc chọn lại 1 chạm.
+  - Nút thao tác ở cuối dòng tự động làm nổi bật nhãn **"Sửa DT"** (màu hổ phách) khi phát hiện dòng có cảnh báo dân tộc.
+  - Khi người dùng chỉnh sửa dân tộc, cờ cảnh báo của dòng đó được tự động giải trừ ngay lập tức.
+
 ## [1.3.1] - 2026-10-14
 
 ### Khắc phục Lỗi Phiên Địa chỉ Viết tắt, Lỗi Đối soát 3 Cấp & Bảo toàn Workbook

@@ -1,8 +1,8 @@
 export const APP_META = {
   name: "VNCare Phiên Địa Chỉ 2 Cấp",
   appCode: "DIACHI",
-  version: "1.3.1",
-  releaseDate: "2026-10-14",
+  version: "1.3.2",
+  releaseDate: "2026-10-15",
   author: "Nguyễn Sơn Nam (Nsnnam / NamNS)",
   githubUrl: "https://github.com/Nsnnam/vncare-diachi-web",
   homeRepo: "Nsnnam/vncare-diachi-web",
@@ -19,6 +19,14 @@ export const APP_META = {
     qrPath: "coffee-qr.jpg",
   },
   changelog: [
+    {
+      version: "1.3.2",
+      date: "2026-10-15",
+      highlights: [
+        "Chuẩn hóa Dân tộc không nhận diện được: Các trường hợp thiếu hoặc không nhận diện được dân tộc trong danh mục 65 dân tộc sẽ được cảnh báo nổi bật, cho phép người dùng tùy ý chỉnh sửa trực tiếp và tự động mặc định khi phiên là '99-Nước ngoài' (nếu không chỉnh sửa).",
+        "Tối ưu tương tác chỉnh sửa Dân tộc: Hỗ trợ nhấp trực tiếp vào huy hiệu cảnh báo dân tộc trên Bảng đối chiếu để mở nhanh danh mục 65 dân tộc, nút thao tác ở cuối dòng tự động làm nổi bật 'Sửa DT' khi dòng có cảnh báo dân tộc."
+      ]
+    },
     {
       version: "1.3.1",
       date: "2026-10-14",

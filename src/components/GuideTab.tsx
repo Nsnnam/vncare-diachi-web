@@ -159,7 +159,7 @@ export const GuideTab: React.FC = () => {
               <span>Cảnh báo & Chuẩn hóa 65 Dân tộc VNCare</span>
             </div>
             <p className="text-slate-600 leading-relaxed">
-              Tự động quy đổi tên dân tộc sang dạng <code>Mã-Dân tộc</code> (như <code>25-Kinh</code>, <code>48-Tày</code>, <code>12-Dao</code>). Nếu file thiếu hoặc ghi sai danh mục, hệ thống sẽ cảnh báo nổi bật và cho phép sửa trực tiếp 1 chạm.
+              Tự động quy đổi tên dân tộc sang dạng <code>Mã-Dân tộc</code> (như <code>25-Kinh</code>, <code>48-Tày</code>, <code>12-Dao</code>). Nếu file thiếu hoặc không nhận diện được danh mục, hệ thống sẽ cảnh báo nổi bật, cho phép chỉnh sửa và mặc định khi phiên là <code>99-Nước ngoài</code> (nếu không chỉnh sửa).
             </p>
           </div>
 

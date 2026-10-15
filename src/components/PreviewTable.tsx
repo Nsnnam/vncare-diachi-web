@@ -135,7 +135,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
     setEditTinh(row.resolvedTinh || '');
     setEditXa(row.resolvedXa || '');
     setEditCccd(row.cccdFormatted || (row.rawCccd ? String(row.rawCccd) : ''));
-    setEditEthnicity(row.ethnicityFormatted || '25-Kinh');
+    setEditEthnicity(row.ethnicityFormatted || '99-Nước ngoài');
     setEditSaveToDict(true);
   };
 
@@ -434,23 +434,27 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                           <span>•</span>
                           {row.isEthnicityMissing ? (
                             <span
-                              className="font-medium text-amber-800 bg-amber-100/90 px-1 py-0.2 rounded border border-amber-300 flex items-center space-x-1"
-                              title="File không có dân tộc hoặc bỏ trống - Tạm gán 25-Kinh"
+                              onClick={() => startEdit(row)}
+                              className="font-medium text-amber-800 bg-amber-100/90 hover:bg-amber-200 px-1.5 py-0.5 rounded border border-amber-300 flex items-center space-x-1 cursor-pointer transition-colors"
+                              title="File không có dân tộc hoặc bỏ trống — Mặc định khi phiên: 99-Nước ngoài (Nhấp để chọn lại DT)"
                             >
                               <AlertTriangle className="w-2.5 h-2.5 text-amber-600 shrink-0" />
-                              <span>DT: {row.ethnicityFormatted} (Tạm gán)</span>
+                              <span>DT: {row.ethnicityFormatted} (Thiếu — Mặc định 99-Nước ngoài)</span>
+                              <Edit3 className="w-2.5 h-2.5 ml-0.5 text-amber-700 opacity-70" />
                             </span>
                           ) : row.isEthnicityUnresolved ? (
                             <span
-                              className="font-medium text-rose-800 bg-rose-100/90 px-1 py-0.2 rounded border border-rose-300 flex items-center space-x-1"
-                              title={`Dân tộc trong file là "${row.rawEthnicity}", không nằm trong danh mục 65 DT - Tạm gán 25-Kinh`}
+                              onClick={() => startEdit(row)}
+                              className="font-medium text-rose-800 bg-rose-100/90 hover:bg-rose-200 px-1.5 py-0.5 rounded border border-rose-300 flex items-center space-x-1 cursor-pointer transition-colors"
+                              title={`Dân tộc trong file là "${row.rawEthnicity}", không nằm trong danh mục 65 DT — Mặc định khi phiên: 99-Nước ngoài (Nhấp để chọn lại DT)`}
                             >
                               <AlertTriangle className="w-2.5 h-2.5 text-rose-600 shrink-0" />
-                              <span>DT: {row.ethnicityFormatted} (File: "{row.rawEthnicity}")</span>
+                              <span>DT: {row.ethnicityFormatted} (File: "{row.rawEthnicity}" — Mặc định 99-Nước ngoài)</span>
+                              <Edit3 className="w-2.5 h-2.5 ml-0.5 text-rose-700 opacity-70" />
                             </span>
                           ) : (
                             <span
-                              className="font-medium text-emerald-800 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200"
+                              className="font-medium text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200"
                               title={`Dân tộc chuẩn VNCare: ${row.ethnicityFormatted}${row.rawEthnicity ? ` (Đọc từ file: ${row.rawEthnicity})` : ''}`}
                             >
                               DT: {row.ethnicityFormatted}
@@ -674,12 +678,26 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                           className={`px-2 py-1 rounded text-[11px] font-medium flex items-center space-x-0.5 mx-auto transition-colors ${
                             row.isCccdMissing
                               ? 'text-rose-700 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 font-semibold shadow-2xs'
+                              : row.isEthnicityMissing || row.isEthnicityUnresolved
+                              ? 'text-amber-800 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-300 font-semibold shadow-2xs'
                               : 'text-slate-500 hover:text-sky-600 hover:bg-sky-50'
                           }`}
-                          title={row.isCccdMissing ? `Bấm để nhập CCCD cho dòng ${row.stt} (${row.name})` : 'Sửa Tỉnh/Xã/CCCD'}
+                          title={
+                            row.isCccdMissing
+                              ? `Bấm để nhập CCCD cho dòng ${row.stt} (${row.name})`
+                              : row.isEthnicityMissing || row.isEthnicityUnresolved
+                              ? `Bấm để chọn lại Dân tộc cho dòng ${row.stt} (${row.name})`
+                              : 'Sửa Tỉnh/Xã/CCCD/Dân tộc'
+                          }
                         >
                           <Edit3 className="w-3 h-3" />
-                          <span>{row.isCccdMissing ? 'Nhập CCCD' : 'Sửa'}</span>
+                          <span>
+                            {row.isCccdMissing
+                              ? 'Nhập CCCD'
+                              : row.isEthnicityMissing || row.isEthnicityUnresolved
+                              ? 'Sửa DT'
+                              : 'Sửa'}
+                          </span>
                         </button>
                       )}
                     </td>

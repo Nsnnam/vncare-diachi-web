@@ -15,7 +15,8 @@ import {
   Layers,
   MapPin,
   CheckCheck,
-  CreditCard
+  CreditCard,
+  Phone
 } from 'lucide-react';
 import { ProcessedRow } from '../types';
 import { PROVINCES_LIST, getCommunesForProvince } from '../services/addressEngine';
@@ -29,7 +30,8 @@ interface PreviewTableProps {
     xaCode: string,
     saveDict?: boolean,
     newCccd?: string,
-    newEthnicity?: string
+    newEthnicity?: string,
+    newPhone?: string
   ) => void;
   selectedFilter?: string;
   onFilterChange?: (filter: string) => void;
@@ -41,14 +43,14 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
   selectedFilter,
   onFilterChange
 }) => {
-  const [internalFilter, setInternalFilter] = useState<'all' | '3_tier' | '2_tier' | 'custom' | 'unresolved' | 'missing_cccd' | 'missing_ethnicity' | 'warning'>('all');
+  const [internalFilter, setInternalFilter] = useState<'all' | '3_tier' | '2_tier' | 'custom' | 'unresolved' | 'missing_cccd' | 'missing_ethnicity' | 'unusual_phone' | 'warning'>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(25);
 
   const activeFilter = (selectedFilter as any) || internalFilter;
 
-  const handleSetFilter = (f: 'all' | '3_tier' | '2_tier' | 'custom' | 'unresolved' | 'missing_cccd' | 'missing_ethnicity' | 'warning') => {
+  const handleSetFilter = (f: 'all' | '3_tier' | '2_tier' | 'custom' | 'unresolved' | 'missing_cccd' | 'missing_ethnicity' | 'unusual_phone' | 'warning') => {
     if (onFilterChange) {
       onFilterChange(f);
     } else {
@@ -63,6 +65,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
   const [editXa, setEditXa] = useState<string>('');
   const [editCccd, setEditCccd] = useState<string>('');
   const [editEthnicity, setEditEthnicity] = useState<string>('');
+  const [editPhone, setEditPhone] = useState<string>('');
   const [editSaveToDict, setEditSaveToDict] = useState<boolean>(true);
 
   // Statistics for filters
@@ -72,6 +75,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
   const countUnresolved = rows.filter((r) => r.status === 'unresolved').length;
   const countMissingCccd = rows.filter((r) => r.isCccdMissing).length;
   const countMissingEthnicity = rows.filter((r) => r.isEthnicityMissing || r.isEthnicityUnresolved).length;
+  const countUnusualPhone = rows.filter((r) => r.isPhoneUnusual).length;
   const countWarning = rows.filter((r) => r.isMissingMandatory).length;
 
   // Filtered rows
@@ -84,6 +88,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
       if (activeFilter === 'unresolved' && r.status !== 'unresolved') return false;
       if (activeFilter === 'missing_cccd' && !r.isCccdMissing) return false;
       if (activeFilter === 'missing_ethnicity' && !r.isEthnicityMissing && !r.isEthnicityUnresolved) return false;
+      if (activeFilter === 'unusual_phone' && !r.isPhoneUnusual) return false;
       if (activeFilter === 'warning' && !r.isMissingMandatory) return false;
 
       // Search filter
@@ -98,11 +103,17 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
           (r.ethnicityFormatted || '').toLowerCase().includes(q) ||
           (r.rawEthnicity || '').toLowerCase().includes(q);
         const inCccd = (r.cccdFormatted || '').toLowerCase().includes(q);
+        const inPhone =
+          (r.phoneFormatted || '').toLowerCase().includes(q) ||
+          (r.rawPhone || '').toLowerCase().includes(q);
         const inMethod = (r.method || '').toLowerCase().includes(q);
         const inMissingCccd = (q.includes('cccd') || q.includes('thieu') || q.includes('thiếu')) && r.isCccdMissing;
         const inMissingEthnicity =
           (q.includes('dan toc') || q.includes('dân tộc') || q.includes('dt')) &&
           (r.isEthnicityMissing || r.isEthnicityUnresolved);
+        const inUnusualPhone =
+          (q.includes('sdt') || q.includes('dien thoai') || q.includes('điện thoại') || q.includes('la') || q.includes('lạ')) &&
+          r.isPhoneUnusual;
         if (
           !inAddr &&
           !inName &&
@@ -111,9 +122,11 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
           !inAddr2Tier &&
           !inEthnicity &&
           !inCccd &&
+          !inPhone &&
           !inMethod &&
           !inMissingCccd &&
-          !inMissingEthnicity
+          !inMissingEthnicity &&
+          !inUnusualPhone
         )
           return false;
       }
@@ -136,6 +149,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
     setEditXa(row.resolvedXa || '');
     setEditCccd(row.cccdFormatted || (row.rawCccd ? String(row.rawCccd) : ''));
     setEditEthnicity(row.ethnicityFormatted || '99-Nước ngoài');
+    setEditPhone(row.phoneFormatted || (row.rawPhone ? String(row.rawPhone) : ''));
     setEditSaveToDict(true);
   };
 
@@ -145,6 +159,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
     setEditXa('');
     setEditCccd('');
     setEditEthnicity('');
+    setEditPhone('');
   };
 
   const saveEdit = (row: ProcessedRow) => {
@@ -152,7 +167,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
       alert('Nếu chọn địa giới hành chính, vui lòng chọn đủ cả Tỉnh và Xã!');
       return;
     }
-    onUpdateRow(row.rowIndex, editTinh, editXa, editSaveToDict, editCccd, editEthnicity);
+    onUpdateRow(row.rowIndex, editTinh, editXa, editSaveToDict, editCccd, editEthnicity, editPhone);
     setEditingRowIndex(null);
   };
 
@@ -287,6 +302,20 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
             </button>
           )}
 
+          {countUnusualPhone > 0 && (
+            <button
+              onClick={() => handleSetFilter('unusual_phone')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
+                activeFilter === 'unusual_phone'
+                  ? 'bg-amber-600 text-white shadow-xs'
+                  : 'bg-white text-amber-700 hover:bg-amber-50 border border-amber-200'
+              }`}
+            >
+              <Phone className="w-3.5 h-3.5 text-amber-600" />
+              <span>SĐT lạ ({countUnusualPhone})</span>
+            </button>
+          )}
+
           {countWarning > 0 && (
             <button
               onClick={() => handleSetFilter('warning')}
@@ -316,7 +345,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                 1. Dữ liệu gốc đầu vào (Input)
               </th>
               <th
-                colSpan={7}
+                colSpan={8}
                 className="bg-emerald-100/90 text-emerald-900 text-center font-bold py-2 text-[11px] uppercase tracking-wider"
               >
                 2. Kết quả đối chiếu & Chuẩn hóa VNCare (Output)
@@ -348,6 +377,9 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
               <th scope="col" className="px-2.5 py-2 text-center w-24 bg-emerald-50/50 border-r border-slate-200">
                 Ngày sinh (DD/MM/YYYY)
               </th>
+              <th scope="col" className="px-2.5 py-2 text-center w-28 bg-emerald-50/50 border-r border-slate-200" title="Số điện thoại 10 số (Bảo toàn số 0 ở đầu)">
+                Số ĐT (10 số)
+              </th>
               <th scope="col" className="px-3 py-2 text-left min-w-[170px] bg-emerald-50/50 border-r border-slate-200">
                 Quy tắc đối chiếu
               </th>
@@ -360,7 +392,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
           <tbody className="divide-y divide-slate-100 bg-white">
             {paginatedRows.length === 0 ? (
               <tr>
-                <td colSpan={11} className="px-4 py-10 text-center text-slate-400 italic">
+                <td colSpan={12} className="px-4 py-10 text-center text-slate-400 italic">
                   Không tìm thấy dòng dữ liệu nào phù hợp với bộ lọc đối chiếu hiện tại.
                 </td>
               </tr>
@@ -407,6 +439,11 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                         {row.isEthnicityUnresolved && (
                           <span className="text-[9px] bg-rose-100 text-rose-800 font-bold px-1.5 py-0.2 rounded border border-rose-300 shrink-0" title={`Dân tộc "${row.rawEthnicity}" không nằm trong danh mục 65 dân tộc VNCare`}>
                             DT chưa khớp
+                          </span>
+                        )}
+                        {row.isPhoneUnusual && (
+                          <span className="text-[9px] bg-amber-100 text-amber-900 font-bold px-1.5 py-0.2 rounded border border-amber-300 shrink-0" title={`Số điện thoại "${row.phoneFormatted || row.rawPhone}" lạ`}>
+                            SĐT lạ
                           </span>
                         )}
                       </div>
@@ -470,6 +507,11 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                       <div className="text-[10px] text-slate-400 truncate max-w-[100px] mx-auto" title="CCCD đọc từ file">
                         {row.rawCccd || <span className="text-slate-300 italic">—</span>}
                       </div>
+                      {row.rawPhone && (
+                        <div className="text-[10px] text-slate-500 truncate max-w-[100px] mx-auto" title={`SĐT đọc từ file: ${row.rawPhone}`}>
+                          SĐT: {row.rawPhone}
+                        </div>
+                      )}
                     </td>
 
                     {/* INPUT 4: Địa chỉ gốc */}
@@ -610,6 +652,50 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                       )}
                     </td>
 
+                    {/* OUTPUT 4b: Số điện thoại chuẩn VNCare (10 chữ số, text general @) */}
+                    <td className="px-2.5 py-2 text-center font-mono bg-emerald-50/20 border-r border-slate-200">
+                      {isEditing ? (
+                        <div className="space-y-1">
+                          <input
+                            type="text"
+                            value={editPhone}
+                            onChange={(e) => setEditPhone(e.target.value)}
+                            placeholder="09xxxxxxxx"
+                            className="w-full text-xs font-mono py-1 px-1.5 border border-sky-400 rounded bg-white text-center font-bold"
+                            maxLength={15}
+                            title="Nhập số điện thoại 10 số (viết liền, bắt đầu bằng 0)"
+                          />
+                          <span className="text-[9px] text-slate-400 block">
+                            (10 số viết liền)
+                          </span>
+                        </div>
+                      ) : row.isPhoneUnusual ? (
+                        <div className="space-y-0.5">
+                          <span
+                            onClick={() => startEdit(row)}
+                            className="inline-flex items-center text-amber-950 bg-amber-100 hover:bg-amber-200 px-2 py-0.5 rounded text-[10px] font-bold border border-amber-300 cursor-pointer shadow-2xs transition-colors"
+                            title={`Số điện thoại "${row.phoneFormatted || row.rawPhone}" lạ (không đủ 10 số hoặc sai định dạng) — Bấm để sửa thủ công`}
+                          >
+                            <AlertTriangle className="w-3 h-3 mr-1 text-amber-600 shrink-0" />
+                            <span>{row.phoneFormatted || row.rawPhone}</span>
+                            <Edit3 className="w-2.5 h-2.5 ml-1 text-amber-700 opacity-70" />
+                          </span>
+                          <span className="text-[9px] text-rose-600 font-semibold block">
+                            ⚠ SĐT lạ ({row.phoneFormatted ? `${row.phoneFormatted.length} số` : 'sai định dạng'})
+                          </span>
+                        </div>
+                      ) : row.isPhoneValid ? (
+                        <span
+                          className="font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-2xs inline-block"
+                          title="Số điện thoại 10 số chuẩn (Text General @)"
+                        >
+                          {row.phoneFormatted}
+                        </span>
+                      ) : (
+                        <span className="text-slate-300 italic text-[11px]">—</span>
+                      )}
+                    </td>
+
                     {/* OUTPUT 5: Quy tắc đối chiếu & Trạng thái */}
                     <td className="px-3 py-2 bg-emerald-50/20 border-r border-slate-200">
                       <div className="space-y-1">
@@ -680,6 +766,8 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                               ? 'text-rose-700 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 font-semibold shadow-2xs'
                               : row.isEthnicityMissing || row.isEthnicityUnresolved
                               ? 'text-amber-800 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-300 font-semibold shadow-2xs'
+                              : row.isPhoneUnusual
+                              ? 'text-amber-900 hover:text-amber-950 bg-amber-50 hover:bg-amber-100 border border-amber-400 font-semibold shadow-2xs'
                               : 'text-slate-500 hover:text-sky-600 hover:bg-sky-50'
                           }`}
                           title={
@@ -687,7 +775,9 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                               ? `Bấm để nhập CCCD cho dòng ${row.stt} (${row.name})`
                               : row.isEthnicityMissing || row.isEthnicityUnresolved
                               ? `Bấm để chọn lại Dân tộc cho dòng ${row.stt} (${row.name})`
-                              : 'Sửa Tỉnh/Xã/CCCD/Dân tộc'
+                              : row.isPhoneUnusual
+                              ? `Bấm để sửa Số điện thoại cho dòng ${row.stt} (${row.name})`
+                              : 'Sửa Tỉnh/Xã/CCCD/Dân tộc/SĐT'
                           }
                         >
                           <Edit3 className="w-3 h-3" />
@@ -696,6 +786,8 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                               ? 'Nhập CCCD'
                               : row.isEthnicityMissing || row.isEthnicityUnresolved
                               ? 'Sửa DT'
+                              : row.isPhoneUnusual
+                              ? 'Sửa SĐT'
                               : 'Sửa'}
                           </span>
                         </button>

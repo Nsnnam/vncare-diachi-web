@@ -2,6 +2,23 @@
 
 Toàn bộ các thay đổi của dự án **VNCare Phiên Địa Chỉ 2 Cấp** được ghi nhận tại đây theo chuẩn [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.3.3] - 2026-10-15
+
+### Chuẩn hóa Số Điện Thoại 10 số (Text General @), Cảnh báo Số lạ & Sửa thủ công
+- **Chuẩn hóa trường Số điện thoại định dạng Text General (`@`):**
+  - Tự động chuẩn hóa toàn bộ các ô Số điện thoại (`phoneCol` / `SDTBENHNHAN`) sang định dạng chuỗi văn bản thuần (Text General `cell.t = 's'`, `cell.z = '@'`).
+  - Bảo toàn tuyệt đối số `0` ở đầu khi mở trong phần mềm Microsoft Excel, ngăn chặn Excel tự động ép kiểu số làm mất số 0 (ví dụ `0912345678` không bị cắt thành `912345678`).
+- **Quy chuẩn 10 số viết liền, không khoảng trắng & xử lý thông minh:**
+  - Làm sạch toàn bộ các ký tự phân cách: khoảng trắng, dấu chấm, dấu gạch ngang, gạch dưới, gạch chéo, dấu ngoặc...
+  - Tự động nhận diện và chuyển đổi các định dạng tiền tố quốc tế phổ biến: `+84...`, `0084...`, `84...` thành đầu số `0...`.
+  - Tự động phát hiện và bù số `0` ở đầu cho các chuỗi 9 chữ số bị Excel strip mất số 0 đầu.
+- **Cảnh báo Số điện thoại lạ (Unusual Phone Number):**
+  - Tự động nhận diện và gắn cờ cảnh báo đối với các số điện thoại lạ: không đủ 10 chữ số (thiếu số), thừa số, không bắt đầu bằng số 0 hoặc chứa các ký tự chữ cái bất thường.
+  - Bổ sung Thẻ thống kê Số ĐT lạ, Huy hiệu cảnh báo màu hổ phách trên Bảng đối chiếu và Băng cảnh báo chuyên biệt giúp nhân viên y tế rà soát tức thì.
+- **Cho phép chỉnh sửa thủ công linh hoạt:**
+  - Cho phép nhấp trực tiếp vào badge cảnh báo Số ĐT hoặc bấm nút **"Sửa SĐT"** ở cuối dòng để sửa thủ công trực tiếp trên bảng.
+  - Hỗ trợ bộ lọc tìm kiếm tức thì theo số điện thoại và cập nhật trạng thái hợp lệ ngay sau khi lưu.
+
 ## [1.3.2] - 2026-10-15
 
 ### Chuẩn hóa Dân tộc Mặc định & Cảnh báo Tương tác Chỉnh sửa 1 chạm

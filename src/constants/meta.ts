@@ -1,7 +1,7 @@
 export const APP_META = {
   name: "VNCare Phiên Địa Chỉ 2 Cấp",
   appCode: "DIACHI",
-  version: "1.3.2",
+  version: "1.3.3",
   releaseDate: "2026-10-15",
   author: "Nguyễn Sơn Nam (Nsnnam / NamNS)",
   githubUrl: "https://github.com/Nsnnam/vncare-diachi-web",
@@ -19,6 +19,15 @@ export const APP_META = {
     qrPath: "coffee-qr.jpg",
   },
   changelog: [
+    {
+      version: "1.3.3",
+      date: "2026-10-15",
+      highlights: [
+        "Chuẩn hóa trường Số điện thoại (SĐT / SDTBENHNHAN): Tự động chuẩn hóa định dạng Text General (@) để bảo toàn tuyệt đối số 0 ở đầu khi mở trong Excel, 10 số viết liền và không có khoảng trắng.",
+        "Xử lý thông minh tiền tố & số 0 đầu: Tự động chuyển đổi các tiền tố quốc tế (+84, 0084, 84...) thành số 0; tự động bù số 0 ở đầu cho các số 9 chữ số bị Excel tự ép kiểu số làm mất số 0.",
+        "Cảnh báo Số điện thoại lạ & Cho phép sửa thủ công: Tự động phát hiện và bật cảnh báo nổi bật (màu hổ phách) đối với các số điện thoại lạ (không đủ 10 số, thừa số, chứa ký tự chữ); hỗ trợ nhấp trực tiếp vào badge cảnh báo hoặc nút 'Sửa SĐT' trên Bảng đối chiếu để chỉnh sửa thủ công nhanh chóng."
+      ]
+    },
     {
       version: "1.3.2",
       date: "2026-10-15",

@@ -322,7 +322,22 @@ export function detectColumns(rows: any[][]): {
     }
     if (
       mapping.phoneCol === -1 &&
-      (norm.includes('sdt') || norm.includes('dien thoai') || norm.includes('phone') || norm.includes('di dong'))
+      !norm.includes('nguoi than') &&
+      !norm.includes('nguoithan') &&
+      (norm === 'sdt' ||
+        norm === 'sđt' ||
+        norm.includes('sdt') ||
+        norm.includes('sđt') ||
+        norm.includes('so dt') ||
+        norm.includes('so dien thoai') ||
+        norm.includes('dien thoai') ||
+        norm.includes('di dong') ||
+        norm.includes('phone') ||
+        norm.includes('telephone') ||
+        norm.includes('mobile') ||
+        norm.includes('lien he') ||
+        norm.includes('lien lac') ||
+        norm.includes('contact'))
     ) {
       mapping.phoneCol = idx;
     }
@@ -592,6 +607,57 @@ export function formatCccd(
 }
 
 /**
+ * Result structure for phone number normalization & validation.
+ */
+export interface PhoneFormatResult {
+  formatted: string;
+  isValid: boolean;
+  isEmpty: boolean;
+  isUnusual: boolean;
+  originalCleaned: string;
+}
+
+/**
+ * Standardize phone number format:
+ * - Text general (@) format to retain leading zero
+ * - Exactly 10 digits, continuous without spaces/delimiters
+ * - Automatic conversion of +84, 0084, 84 prefixes to 0
+ * - Automatic restoration of stripped leading zero for 9-digit numbers (caused by Excel numeric coercion)
+ * - Flags unusual phone numbers (not 10 digits, strange characters, invalid format) for warning & manual editing
+ */
+export function formatPhone(val: any, fallback: string = ''): PhoneFormatResult {
+  if (val === null || val === undefined || val === '') {
+    return { formatted: fallback, isValid: false, isEmpty: true, isUnusual: false, originalCleaned: '' };
+  }
+  let s = String(val).trim().replace(/[\s.\-_/\\(),]/g, '');
+  if (!s) {
+    return { formatted: fallback, isValid: false, isEmpty: true, isUnusual: false, originalCleaned: '' };
+  }
+
+  // Handle international prefixes
+  if (s.startsWith('+84')) {
+    s = '0' + s.slice(3);
+  } else if (s.startsWith('0084')) {
+    s = '0' + s.slice(4);
+  } else if (s.startsWith('84') && s.length === 11 && /^\d+$/.test(s)) {
+    s = '0' + s.slice(2);
+  }
+
+  // Restore stripped leading zero by Excel (9 digits -> 10 digits starting with 0)
+  if (/^\d{9}$/.test(s)) {
+    s = '0' + s;
+  }
+
+  // Strict check: exactly 10 digits starting with 0
+  if (/^0\d{9}$/.test(s)) {
+    return { formatted: s, isValid: true, isEmpty: false, isUnusual: false, originalCleaned: s };
+  }
+
+  // Otherwise, flag as unusual phone number
+  return { formatted: s, isValid: false, isEmpty: false, isUnusual: true, originalCleaned: s };
+}
+
+/**
  * Format Đợt khám: strict YYYYMM (6 digits, e.g. 202601)
  */
 export function formatDotKham(val: any, fallback?: string): string {
@@ -717,6 +783,13 @@ export function processAddressRows(
     const rawNation = mapping.nationCol !== undefined && mapping.nationCol >= 0 ? row[mapping.nationCol] : '';
     const nationFormatted = formatNation(rawNation);
 
+    const rawPhone = mapping.phoneCol !== undefined && mapping.phoneCol >= 0 ? row[mapping.phoneCol] : '';
+    const phoneRes = formatPhone(rawPhone);
+    const phoneFormatted = phoneRes.formatted;
+    const isPhoneValid = phoneRes.isValid;
+    const isPhoneMissing = phoneRes.isEmpty;
+    const isPhoneUnusual = phoneRes.isUnusual;
+
     const rawAddress = mapping.addressCol >= 0 ? String(row[mapping.addressCol] || '').trim() : '';
 
     // Check mandatory fields: STT, Tên BN, Ngày sinh, Giới tính, Nghề nghiệp, Dân tộc, Quốc gia, Tỉnh, Xã, Địa chỉ, CCCD
@@ -736,6 +809,9 @@ export function processAddressRows(
       missingFields.push('CCCD (Thiếu)');
     } else if (!isCccdValid) {
       missingFields.push('CCCD (Sai định dạng)');
+    }
+    if (isPhoneUnusual) {
+      missingFields.push('Số ĐT lạ');
     }
 
     if (!rawAddress) {
@@ -762,6 +838,11 @@ export function processAddressRows(
         ethnicityFormatted,
         isEthnicityMissing,
         isEthnicityUnresolved,
+        rawPhone: rawPhone !== undefined && rawPhone !== null ? String(rawPhone).trim() : '',
+        phoneFormatted,
+        isPhoneValid,
+        isPhoneMissing,
+        isPhoneUnusual,
         nationFormatted,
         rawAddress: '',
         resolvedTinh: '',
@@ -813,6 +894,11 @@ export function processAddressRows(
       ethnicityFormatted,
       isEthnicityMissing,
       isEthnicityUnresolved,
+      rawPhone: rawPhone !== undefined && rawPhone !== null ? String(rawPhone).trim() : '',
+      phoneFormatted,
+      isPhoneValid,
+      isPhoneMissing,
+      isPhoneUnusual,
       nationFormatted,
       rawAddress,
       resolvedTinh,
@@ -986,6 +1072,11 @@ export function exportInplaceFile(
     if (wbData.columnMapping.ethnicityCol !== undefined && wbData.columnMapping.ethnicityCol >= 0) {
       sheetData[targetRowIdx][wbData.columnMapping.ethnicityCol] = pr.ethnicityFormatted;
     }
+
+    // Phone formatting (10 digits continuous, text general @ format)
+    if (wbData.columnMapping.phoneCol !== undefined && wbData.columnMapping.phoneCol >= 0) {
+      sheetData[targetRowIdx][wbData.columnMapping.phoneCol] = pr.phoneFormatted || '';
+    }
   });
 
   // Re-encode worksheet
@@ -1004,6 +1095,7 @@ export function exportInplaceFile(
     wbData.columnMapping.cccdCol ?? -1,
     wbData.columnMapping.cccdDateCol ?? -1,
     wbData.columnMapping.dotKhamCol ?? -1,
+    wbData.columnMapping.phoneCol ?? -1,
   ]);
 
   workingWb.Sheets[wbData.activeSheet] = newSheet;
@@ -1166,7 +1258,7 @@ export async function exportVncareTemplateFile(
     const tinh = pr.resolvedTinh || '';
     const xa = pr.resolvedXa || '';
     const diachi = pr.rawAddress || '';
-    const phone = mapping.phoneCol !== undefined && mapping.phoneCol >= 0 ? String(orig[mapping.phoneCol] || '').trim() : '';
+    const phone = pr.phoneFormatted || '';
 
     const rowItem: any[] = [
       stt, // 0: STT
@@ -1206,7 +1298,7 @@ export async function exportVncareTemplateFile(
   const newDsSheet = XLSX.utils.aoa_to_sheet(rowsAoa);
 
   // Apply Times New Roman 13, Borders, Auto-fit rows and columns, Text general format
-  applyTimesNewRomanStyles(newDsSheet, rowsAoa, 0, [0, 2, 3, 8, 9, 14]);
+  applyTimesNewRomanStyles(newDsSheet, rowsAoa, 0, [0, 2, 3, 8, 9, 14, 15]);
 
   templateWb.Sheets['DANHSACH'] = newDsSheet;
   if (!templateWb.SheetNames.includes('DANHSACH')) {

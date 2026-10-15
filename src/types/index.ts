@@ -97,6 +97,11 @@ export interface ProcessedRow {
   ethnicityFormatted: string;
   isEthnicityMissing?: boolean;
   isEthnicityUnresolved?: boolean;
+  rawPhone?: string;
+  phoneFormatted: string;
+  isPhoneValid: boolean;
+  isPhoneMissing: boolean;
+  isPhoneUnusual?: boolean;
   nationFormatted: string;
   rawAddress: string;
   resolvedTinh: string;

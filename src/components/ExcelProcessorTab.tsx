@@ -20,7 +20,8 @@ import {
   CreditCard,
   Hash,
   Sparkles,
-  CheckCheck
+  CheckCheck,
+  Phone
 } from 'lucide-react';
 import { ColumnMapping, ProcessedRow, ProcessingMode } from '../types';
 import {
@@ -29,6 +30,7 @@ import {
   switchSheet,
   processAddressRows,
   formatCccd,
+  formatPhone,
   exportInplaceFile,
   exportVncareTemplateFile,
   downloadExcelFile,
@@ -174,7 +176,8 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
     xaCode: string,
     saveToDict: boolean = false,
     newCccd?: string,
-    newEthnicity?: string
+    newEthnicity?: string,
+    newPhone?: string
   ) => {
     setProcessedRows((prev) => {
       const updated = [...prev];
@@ -225,6 +228,19 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
             target.missingFields.push('Dân tộc (Thiếu)');
           } else if (ethRes.isUnresolved) {
             target.missingFields.push('Dân tộc (Chưa khớp)');
+          }
+        }
+
+        if (newPhone !== undefined) {
+          const phoneRes = formatPhone(newPhone, '');
+          target.rawPhone = newPhone;
+          target.phoneFormatted = phoneRes.formatted;
+          target.isPhoneValid = phoneRes.isValid;
+          target.isPhoneMissing = phoneRes.isEmpty;
+          target.isPhoneUnusual = phoneRes.isUnusual;
+          target.missingFields = target.missingFields.filter((f) => !f.includes('ĐT'));
+          if (phoneRes.isUnusual) {
+            target.missingFields.push('Số ĐT lạ');
           }
         }
 
@@ -314,6 +330,8 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
   const countMissingCccd = missingCccdRows.length;
   const missingEthnicityRows = processedRows.filter((r) => r.isEthnicityMissing || r.isEthnicityUnresolved);
   const countMissingEthnicity = missingEthnicityRows.length;
+  const unusualPhoneRows = processedRows.filter((r) => r.isPhoneUnusual);
+  const countUnusualPhone = unusualPhoneRows.length;
   const successCount = count3Cap + count2Cap + customCount;
   const successRate = totalRows > 0 ? Math.round((successCount / totalRows) * 100) : 0;
   const compliantCount = processedRows.filter((r) => !r.isMissingMandatory).length;
@@ -1030,6 +1048,16 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
                     ⚠ {countMissingEthnicity} dòng thiếu/chưa khớp DT
                   </button>
                 )}
+                {countUnusualPhone > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setTableFilter('unusual_phone')}
+                    className="bg-amber-400/30 text-amber-200 px-2.5 py-0.5 rounded-md backdrop-blur-xs border border-amber-300/40 font-bold hover:bg-amber-400/40 transition-colors cursor-pointer"
+                    title="Nhấp để lọc xem danh sách người bệnh có số điện thoại lạ"
+                  >
+                    ⚠ {countUnusualPhone} dòng SĐT lạ
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1223,7 +1251,32 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
                 </div>
               </div>
 
-              {/* Card 7: Overall Reconciliation Rate */}
+              {/* Card 7: Unusual Phone (if any) */}
+              {countUnusualPhone > 0 && (
+                <div
+                  onClick={() => setTableFilter('unusual_phone')}
+                  className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                    tableFilter === 'unusual_phone'
+                      ? 'bg-amber-50 border-amber-400 ring-2 ring-amber-400 shadow-sm'
+                      : 'bg-amber-50/60 border-amber-200 hover:border-amber-300 hover:shadow-2xs'
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-amber-800 text-xs font-semibold">
+                    <span className="flex items-center">
+                      <Phone className="w-3.5 h-3.5 mr-1 text-amber-600" /> SĐT lạ
+                    </span>
+                    <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded font-semibold animate-pulse">
+                      Cần sửa
+                    </span>
+                  </div>
+                  <div className="text-2xl font-extrabold text-amber-950 mt-1">{countUnusualPhone}</div>
+                  <div className="text-[11px] text-amber-700 truncate mt-0.5">
+                    Bấm lọc SĐT lạ ➔
+                  </div>
+                </div>
+              )}
+
+              {/* Card 8: Overall Reconciliation Rate */}
               <div className="p-3 rounded-xl border border-slate-200 bg-slate-900 text-white shadow-xs col-span-2 sm:col-span-1 lg:col-span-1">
                 <div className="text-slate-400 text-xs font-medium flex items-center justify-between">
                   <span>Tỷ lệ khớp địa chỉ</span>
@@ -1376,6 +1429,78 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
                       className="inline-flex items-center px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-xs font-bold transition-colors cursor-pointer"
                     >
                       + {countMissingEthnicity - 16} người khác...
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Unusual Phone Alert Banner */}
+          {countUnusualPhone > 0 && (
+            <div className="bg-gradient-to-r from-amber-50 via-rose-50 to-orange-50 border-2 border-amber-300 text-amber-950 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start sm:items-center space-x-3">
+                  <div className="p-2.5 bg-amber-500 text-white rounded-xl shadow-xs shrink-0">
+                    <Phone className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <h4 className="font-extrabold text-amber-950 text-sm sm:text-base">
+                        CẢNH BÁO: PHÁT HIỆN {countUnusualPhone} NGƯỜI BỆNH CÓ SỐ ĐIỆN THOẠI LẠ (KHÔNG ĐỦ 10 SỐ HOẶC SAI ĐỊNH DẠNG)!
+                      </h4>
+                      <span className="px-2 py-0.5 bg-amber-200 text-amber-900 rounded-full text-xs font-bold font-mono">
+                        {countUnusualPhone} dòng
+                      </span>
+                    </div>
+                    <p className="text-xs text-amber-800 mt-0.5 leading-relaxed">
+                      Số điện thoại chuẩn VNCare yêu cầu <strong>10 chữ số</strong> viết liền, không khoảng trắng, bắt đầu bằng số <strong>0</strong> và lưu định dạng <strong>Text General (@)</strong> để bảo toàn số 0 ở đầu. Quý đơn vị có thể bấm nút <strong>"Sửa SĐT"</strong> tại từng dòng ở bảng bên dưới để chỉnh sửa bổ sung trực tiếp.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setTableFilter('unusual_phone')}
+                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center space-x-1.5 cursor-pointer shrink-0"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <span>Lọc xem {countUnusualPhone} dòng SĐT lạ</span>
+                </button>
+              </div>
+
+              {/* Quick list of unusual phone persons & STT */}
+              <div className="pt-2 border-t border-amber-200/80">
+                <div className="text-[11px] font-bold text-amber-900 mb-1.5 flex items-center justify-between">
+                  <span>Danh sách người bệnh & số dòng có SĐT cần kiểm tra:</span>
+                  {countUnusualPhone > 12 && (
+                    <span className="text-amber-700 font-normal">
+                      (Hiển thị 12/{countUnusualPhone} người — bấm "Lọc xem" để xem toàn bộ)
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
+                  {unusualPhoneRows.slice(0, 16).map((r) => (
+                    <button
+                      key={r.rowIndex}
+                      onClick={() => setTableFilter('unusual_phone')}
+                      className="inline-flex items-center space-x-1.5 px-2.5 py-1 bg-white hover:bg-amber-100 border border-amber-300 rounded-lg text-xs text-amber-950 transition-colors shadow-2xs group cursor-pointer"
+                      title={`Dòng STT ${r.stt}: ${r.name} - SĐT: "${r.phoneFormatted || r.rawPhone || 'Trống'}"`}
+                    >
+                      <span className="font-mono font-bold text-amber-800 bg-amber-100 px-1 py-0.2 rounded text-[10px]">
+                        Dòng {r.stt}
+                      </span>
+                      <span className="font-semibold">{r.name}</span>
+                      <span className="font-mono text-[10px] text-rose-700 font-bold bg-rose-50 px-1 py-0.2 rounded border border-rose-200">
+                        {r.phoneFormatted || r.rawPhone || 'Trống'}
+                      </span>
+                    </button>
+                  ))}
+                  {countUnusualPhone > 16 && (
+                    <button
+                      onClick={() => setTableFilter('unusual_phone')}
+                      className="inline-flex items-center px-2.5 py-1 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      + {countUnusualPhone - 16} người khác...
                     </button>
                   )}
                 </div>

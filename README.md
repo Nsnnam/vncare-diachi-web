@@ -1,8 +1,8 @@
-# VNCare Phiên Địa Chỉ 2 Cấp (Web & Offline v1.3.2)
+# VNCare Phiên Địa Chỉ 2 Cấp (Web & Offline v1.3.3)
 
-> **Công cụ tự động nhận diện, phân tích và phiên mã địa chỉ hành chính 2 cấp (Tỉnh/TP và Xã/Phường), chuyển đổi địa chỉ 3 cấp cũ sang chuẩn VNCare / VNPT-HIS từ file Excel. Hoạt động 100% Offline bảo mật dữ liệu y tế, chuẩn hóa định dạng Times New Roman 13pt, quản lý 65 dân tộc và tùy biến cột linh hoạt.**
+> **Công cụ tự động nhận diện, phân tích và phiên mã địa chỉ hành chính 2 cấp (Tỉnh/TP và Xã/Phường), chuyển đổi địa chỉ 3 cấp cũ sang chuẩn VNCare / VNPT-HIS từ file Excel. Hoạt động 100% Offline bảo mật dữ liệu y tế, chuẩn hóa định dạng Times New Roman 13pt, chuẩn hóa số điện thoại 10 số (Text General @), quản lý 65 dân tộc và tùy biến cột linh hoạt.**
 
-[![Version](https://img.shields.io/badge/version-1.3.2-blue.svg)](https://github.com/Nsnnam/vncare-diachi-web)
+[![Version](https://img.shields.io/badge/version-1.3.3-blue.svg)](https://github.com/Nsnnam/vncare-diachi-web)
 [![Offline First](https://img.shields.io/badge/offline--first-100%25-emerald.svg)](https://nsnnam.github.io/vncare-diachi-web/)
 [![Standard](https://img.shields.io/badge/standard-NSN_App_Standard-indigo.svg)](https://github.com/Nsnnam)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -10,24 +10,33 @@
 
 ---
 
-## Bảng Thông Tin Phát Hành (v1.3.2)
+## Bảng Thông Tin Phát Hành (v1.3.3)
 
 | Thông tin | Chi tiết |
 |---|---|
-| **Phiên bản hiện tại** | `v1.3.2` |
+| **Phiên bản hiện tại** | `v1.3.3` |
 | **Ngày cập nhật** | 15/10/2026 |
 | **Tác giả** | [Nguyễn Sơn Nam (Nsnnam / NamNS)](https://github.com/Nsnnam) |
 | **Múi giờ chuẩn** | GMT+7 (`Asia/Ho_Chi_Minh`) |
 | **Kho mã nguồn** | [https://github.com/Nsnnam/vncare-diachi-web](https://github.com/Nsnnam/vncare-diachi-web) |
 | **Trang trực tuyến (Live)** | [https://nsnnam.github.io/vncare-diachi-web/](https://nsnnam.github.io/vncare-diachi-web/) |
-| **Bản chạy Offline Single-file HTML** | [`releases/vncare-diachi-web-v1.3.2-offline.html`](./releases/vncare-diachi-web-v1.3.2-offline.html) *(Mở trực tiếp trên Chrome, Edge, Cốc Cốc không cần mạng)* |
+| **Bản chạy Offline Single-file HTML** | [`releases/vncare-diachi-web-v1.3.3-offline.html`](./releases/vncare-diachi-web-v1.3.3-offline.html) *(Mở trực tiếp trên Chrome, Edge, Cốc Cốc không cần mạng)* |
 | **Font giao diện** | **Be Vietnam Pro** (Thiết kế tối ưu tiếng Việt) |
 | **Font file Excel xuất ra** | **Times New Roman 13pt**, kẻ ô viền (borders), giãn dòng theo nội dung |
 | **Mật mã mở khóa mặc định** | `namns` (mã băm SHA-256 an toàn) |
 
 ---
 
-## Các Tính Năng Mới & Sửa Đổi Nổi Bật của Phiên Bản v1.3.2
+## Các Tính Năng Mới & Sửa Đổi Nổi Bật của Phiên Bản v1.3.3
+
+### 1. Chuẩn hóa Số Điện Thoại 10 số (Định dạng Text General `@`)
+- **Bảo toàn số 0 ở đầu:** Tự động thiết lập định dạng Text General (`cell.t = 's'`, `cell.z = '@'`) cho cột Số điện thoại (`SDTBENHNHAN` / `phoneCol`) trong file Excel xuất ra, loại bỏ hoàn toàn hiện tượng Excel tự động chuyển thành Number làm mất số `0` ở đầu.
+- **Quy chuẩn 10 chữ số viết liền:** Làm sạch toàn bộ khoảng trắng, dấu chấm, dấu gạch nối...; tự động chuyển đổi các tiền tố quốc tế `+84`, `0084`, `84` thành `0`; tự động bù số `0` ở đầu cho các chuỗi 9 chữ số bị mất số 0 đầu.
+- **Cảnh báo Số điện thoại lạ & Cho phép sửa thủ công:** Phát hiện các số điện thoại không hợp lệ (không đủ 10 số, thừa số, chứa chữ/ký tự lạ) với huy hiệu cảnh báo hổ phách, thẻ thống kê và băng cảnh báo; hỗ trợ nhấp trực tiếp vào badge cảnh báo hoặc nút "Sửa SĐT" để chỉnh sửa thủ công nhanh chóng.
+
+---
+
+## Các Tính Năng & Sửa Đổi của Phiên Bản v1.3.2
 
 ### 1. Chuẩn hóa Dân tộc không nhận diện được & Mặc định `99-Nước ngoài`
 - **Mặc định phiên ra file là `99-Nước ngoài`:** Nếu dòng dữ liệu bị thiếu hoặc chuỗi dân tộc không khớp với bất kỳ dân tộc nào trong danh mục 65 dân tộc chuẩn VNCare, hệ thống sẽ tự động gán giá trị xuất file là **`99-Nước ngoài`** (nếu người dùng không chủ động chỉnh sửa).

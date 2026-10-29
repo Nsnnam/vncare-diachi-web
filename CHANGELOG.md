@@ -2,6 +2,23 @@
 
 Toàn bộ các thay đổi của dự án **VNCare Phiên Địa Chỉ 2 Cấp** được ghi nhận tại đây theo chuẩn [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.3.4] - 2026-10-29
+
+### Chuẩn Hóa Quốc Gia (Sheet QUOCGIA 250 Mã), Hỗ Trợ Người Nước Ngoài & Người Việt Nam
+- **Chuẩn hóa danh mục Quốc gia chuẩn theo Sheet `QUOCGIA` phôi VNCare (`MauFileImportBenhNhan_ksktoandan.xls`):**
+  - Xây dựng module chuẩn hóa `nationService` tích hợp đầy đủ 250 quốc gia chính thức theo đúng định dạng `Mã-Tên quốc gia` của cổng VNCare.
+  - Tự động nhận diện và phiên chuẩn cho cả người Việt Nam (`0-Việt Nam`) và người nước ngoài (`336-Trung quốc`, `512-Đài loan`, `411-Hàn quốc`, `403-Nhật`, `517-Hoa kỳ`...).
+  - Tích hợp từ điển tra cứu thông minh và từ đồng nghĩa: hỗ trợ tên tiếng Việt có dấu, không dấu, tên tiếng Anh (`China`, `Taiwan`, `Korea`, `USA`, `Japan`...), mã số trực tiếp (`336`, `512`, `411`...) và tên viết tắt.
+- **Sửa lỗi thiếu ghi đè cột Quốc gia khi xuất file In-place:**
+  - Bổ sung logic ghi giá trị quốc gia chuẩn hóa `pr.nationFormatted` vào cột `nationCol` trong hàm `exportInplaceFile`. Khắc phục triệt để tình trạng file xuất ra theo Chế độ 1 giữ nguyên tên quốc gia thô chưa phiên mã.
+  - Ghi chuẩn xác cột 7 (`QUOCGIA`) trong mẫu chuẩn 7 sheet VNCare (`exportVncareTemplateFile`).
+  - Cập nhật hàm tạo dự phòng `createVncareLookupWorkbook` xuất đầy đủ 250 dòng quốc gia vào Sheet `QUOCGIA`.
+- **Giao diện cấu hình & Đối chiếu Quốc gia trực quan:**
+  - Bổ sung dropdown chọn **"Cột Quốc gia (Chuẩn hóa 250 QG)"** trong phần tùy chỉnh ánh xạ cột (`showMappingConfig`).
+  - Hiển thị cột **"Quốc gia đã phiên (Cột H)"** trên Bảng đối chiếu (Output) và Quốc gia gốc trong file nạp (Input).
+  - Tự động phát hiện và bật cảnh báo nổi bật (màu tím) khi người nước ngoài (`99-Nước ngoài`) bị thiếu thông tin quốc gia hoặc có tên quốc gia chưa chuẩn hóa.
+  - Hỗ trợ dropdown chọn nhanh 250 quốc gia khi chỉnh sửa và nhấp trực tiếp vào huy hiệu cảnh báo trên bảng để sửa 1 chạm.
+
 ## [1.3.3] - 2026-10-15
 
 ### Chuẩn hóa Số Điện Thoại 10 số (Text General @), Cảnh báo Số lạ & Sửa thủ công

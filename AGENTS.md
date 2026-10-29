@@ -10,4 +10,4 @@ Khi phát triển, sửa lỗi hoặc bảo trì repo **vncare-diachi-web**, Age
    - Ứng dụng phải hoạt động 100% offline tại client, không thêm API bên ngoài làm rò rỉ dữ liệu người bệnh hoặc thông tin KSK của đơn vị.
 3. **Quy trình build:**
    - `pnpm run build`: Tạo bundle cho GitHub Pages (`dist/`).
-   - `pnpm run build:single`: Đóng gói Single-file HTML offline (`releases/vncare-diachi-web-v1.3.3-offline.html`).
+   - `pnpm run build:single`: Đóng gói Single-file HTML offline (`releases/vncare-diachi-web-v1.3.4-offline.html`).

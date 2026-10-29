@@ -102,7 +102,10 @@ export interface ProcessedRow {
   isPhoneValid: boolean;
   isPhoneMissing: boolean;
   isPhoneUnusual?: boolean;
+  rawNation?: string;
   nationFormatted: string;
+  isNationMissing?: boolean;
+  isNationUnresolved?: boolean;
   rawAddress: string;
   resolvedTinh: string;
   resolvedXa: string;

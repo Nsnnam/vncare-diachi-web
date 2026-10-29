@@ -16,11 +16,13 @@ import {
   MapPin,
   CheckCheck,
   CreditCard,
-  Phone
+  Phone,
+  Globe
 } from 'lucide-react';
 import { ProcessedRow } from '../types';
 import { PROVINCES_LIST, getCommunesForProvince } from '../services/addressEngine';
 import { VNCARE_ETHNICITIES } from '../services/ethnicityService';
+import { VNCARE_NATIONS } from '../services/nationService';
 
 interface PreviewTableProps {
   rows: ProcessedRow[];
@@ -31,7 +33,8 @@ interface PreviewTableProps {
     saveDict?: boolean,
     newCccd?: string,
     newEthnicity?: string,
-    newPhone?: string
+    newPhone?: string,
+    newNation?: string
   ) => void;
   selectedFilter?: string;
   onFilterChange?: (filter: string) => void;
@@ -43,14 +46,14 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
   selectedFilter,
   onFilterChange
 }) => {
-  const [internalFilter, setInternalFilter] = useState<'all' | '3_tier' | '2_tier' | 'custom' | 'unresolved' | 'missing_cccd' | 'missing_ethnicity' | 'unusual_phone' | 'warning'>('all');
+  const [internalFilter, setInternalFilter] = useState<'all' | '3_tier' | '2_tier' | 'custom' | 'unresolved' | 'missing_cccd' | 'missing_ethnicity' | 'missing_nation' | 'unusual_phone' | 'warning'>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [page, setPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(25);
 
   const activeFilter = (selectedFilter as any) || internalFilter;
 
-  const handleSetFilter = (f: 'all' | '3_tier' | '2_tier' | 'custom' | 'unresolved' | 'missing_cccd' | 'missing_ethnicity' | 'unusual_phone' | 'warning') => {
+  const handleSetFilter = (f: 'all' | '3_tier' | '2_tier' | 'custom' | 'unresolved' | 'missing_cccd' | 'missing_ethnicity' | 'missing_nation' | 'unusual_phone' | 'warning') => {
     if (onFilterChange) {
       onFilterChange(f);
     } else {
@@ -65,6 +68,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
   const [editXa, setEditXa] = useState<string>('');
   const [editCccd, setEditCccd] = useState<string>('');
   const [editEthnicity, setEditEthnicity] = useState<string>('');
+  const [editNation, setEditNation] = useState<string>('');
   const [editPhone, setEditPhone] = useState<string>('');
   const [editSaveToDict, setEditSaveToDict] = useState<boolean>(true);
 
@@ -75,6 +79,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
   const countUnresolved = rows.filter((r) => r.status === 'unresolved').length;
   const countMissingCccd = rows.filter((r) => r.isCccdMissing).length;
   const countMissingEthnicity = rows.filter((r) => r.isEthnicityMissing || r.isEthnicityUnresolved).length;
+  const countMissingNation = rows.filter((r) => r.isNationMissing || r.isNationUnresolved).length;
   const countUnusualPhone = rows.filter((r) => r.isPhoneUnusual).length;
   const countWarning = rows.filter((r) => r.isMissingMandatory).length;
 
@@ -88,6 +93,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
       if (activeFilter === 'unresolved' && r.status !== 'unresolved') return false;
       if (activeFilter === 'missing_cccd' && !r.isCccdMissing) return false;
       if (activeFilter === 'missing_ethnicity' && !r.isEthnicityMissing && !r.isEthnicityUnresolved) return false;
+      if (activeFilter === 'missing_nation' && !r.isNationMissing && !r.isNationUnresolved) return false;
       if (activeFilter === 'unusual_phone' && !r.isPhoneUnusual) return false;
       if (activeFilter === 'warning' && !r.isMissingMandatory) return false;
 
@@ -102,6 +108,9 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
         const inEthnicity =
           (r.ethnicityFormatted || '').toLowerCase().includes(q) ||
           (r.rawEthnicity || '').toLowerCase().includes(q);
+        const inNation =
+          (r.nationFormatted || '').toLowerCase().includes(q) ||
+          (r.rawNation || '').toLowerCase().includes(q);
         const inCccd = (r.cccdFormatted || '').toLowerCase().includes(q);
         const inPhone =
           (r.phoneFormatted || '').toLowerCase().includes(q) ||
@@ -111,6 +120,9 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
         const inMissingEthnicity =
           (q.includes('dan toc') || q.includes('dân tộc') || q.includes('dt')) &&
           (r.isEthnicityMissing || r.isEthnicityUnresolved);
+        const inMissingNation =
+          (q.includes('quoc gia') || q.includes('quốc gia') || q.includes('qg')) &&
+          (r.isNationMissing || r.isNationUnresolved);
         const inUnusualPhone =
           (q.includes('sdt') || q.includes('dien thoai') || q.includes('điện thoại') || q.includes('la') || q.includes('lạ')) &&
           r.isPhoneUnusual;
@@ -121,11 +133,13 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
           !inXa &&
           !inAddr2Tier &&
           !inEthnicity &&
+          !inNation &&
           !inCccd &&
           !inPhone &&
           !inMethod &&
           !inMissingCccd &&
           !inMissingEthnicity &&
+          !inMissingNation &&
           !inUnusualPhone
         )
           return false;
@@ -149,6 +163,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
     setEditXa(row.resolvedXa || '');
     setEditCccd(row.cccdFormatted || (row.rawCccd ? String(row.rawCccd) : ''));
     setEditEthnicity(row.ethnicityFormatted || '99-Nước ngoài');
+    setEditNation(row.nationFormatted || '0-Việt Nam');
     setEditPhone(row.phoneFormatted || (row.rawPhone ? String(row.rawPhone) : ''));
     setEditSaveToDict(true);
   };
@@ -159,6 +174,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
     setEditXa('');
     setEditCccd('');
     setEditEthnicity('');
+    setEditNation('');
     setEditPhone('');
   };
 
@@ -167,7 +183,16 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
       alert('Nếu chọn địa giới hành chính, vui lòng chọn đủ cả Tỉnh và Xã!');
       return;
     }
-    onUpdateRow(row.rowIndex, editTinh, editXa, editSaveToDict, editCccd, editEthnicity, editPhone);
+    onUpdateRow(
+      row.rowIndex,
+      editTinh,
+      editXa,
+      editSaveToDict,
+      editCccd,
+      editEthnicity,
+      editPhone,
+      editNation
+    );
     setEditingRowIndex(null);
   };
 
@@ -302,6 +327,20 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
             </button>
           )}
 
+          {countMissingNation > 0 && (
+            <button
+              onClick={() => handleSetFilter('missing_nation')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
+                activeFilter === 'missing_nation'
+                  ? 'bg-purple-600 text-white shadow-xs'
+                  : 'bg-white text-purple-700 hover:bg-purple-50 border border-purple-200'
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5 text-purple-500" />
+              <span>Thiếu/chưa khớp QG ({countMissingNation})</span>
+            </button>
+          )}
+
           {countUnusualPhone > 0 && (
             <button
               onClick={() => handleSetFilter('unusual_phone')}
@@ -345,7 +384,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                 1. Dữ liệu gốc đầu vào (Input)
               </th>
               <th
-                colSpan={8}
+                colSpan={9}
                 className="bg-emerald-100/90 text-emerald-900 text-center font-bold py-2 text-[11px] uppercase tracking-wider"
               >
                 2. Kết quả đối chiếu & Chuẩn hóa VNCare (Output)
@@ -367,6 +406,9 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
               </th>
               <th scope="col" className="px-3 py-2 text-left w-44 bg-emerald-50/50 border-r border-slate-200">
                 Xã đã phiên (Cột M)
+              </th>
+              <th scope="col" className="px-3 py-2 text-left w-44 bg-emerald-50/50 border-r border-slate-200" title="Quốc gia chuẩn VNCare (250 quốc gia theo Sheet QUOCGIA)">
+                Quốc gia đã phiên (Cột H)
               </th>
               <th scope="col" className="px-3 py-2 text-left w-48 bg-emerald-50/50 border-r border-slate-200" title="Địa chỉ 2 cấp không gồm mã số (Xã, Tỉnh)">
                 Địa chỉ 2 cấp (Không mã)
@@ -392,7 +434,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
           <tbody className="divide-y divide-slate-100 bg-white">
             {paginatedRows.length === 0 ? (
               <tr>
-                <td colSpan={12} className="px-4 py-10 text-center text-slate-400 italic">
+                <td colSpan={13} className="px-4 py-10 text-center text-slate-400 italic">
                   Không tìm thấy dòng dữ liệu nào phù hợp với bộ lọc đối chiếu hiện tại.
                 </td>
               </tr>
@@ -439,6 +481,16 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                         {row.isEthnicityUnresolved && (
                           <span className="text-[9px] bg-rose-100 text-rose-800 font-bold px-1.5 py-0.2 rounded border border-rose-300 shrink-0" title={`Dân tộc "${row.rawEthnicity}" không nằm trong danh mục 65 dân tộc VNCare`}>
                             DT chưa khớp
+                          </span>
+                        )}
+                        {row.isNationMissing && (
+                          <span className="text-[9px] bg-purple-100 text-purple-800 font-bold px-1.5 py-0.2 rounded border border-purple-300 shrink-0" title="Chưa có thông tin Quốc gia cho người nước ngoài">
+                            Thiếu QG
+                          </span>
+                        )}
+                        {row.isNationUnresolved && (
+                          <span className="text-[9px] bg-purple-100 text-purple-800 font-bold px-1.5 py-0.2 rounded border border-purple-300 shrink-0" title={`Quốc gia "${row.rawNation}" không nằm trong danh mục 250 QG VNCare`}>
+                            QG chưa khớp
                           </span>
                         )}
                         {row.isPhoneUnusual && (
@@ -496,6 +548,17 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                             >
                               DT: {row.ethnicityFormatted}
                             </span>
+                          )}
+                          {row.rawNation && (
+                            <>
+                              <span>•</span>
+                              <span
+                                className="font-medium text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200"
+                                title={`Quốc gia đọc từ file: ${row.rawNation}`}
+                              >
+                                QG file: {row.rawNation}
+                              </span>
+                            </>
                           )}
                         </div>
                       )}
@@ -570,6 +633,60 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                         </span>
                       ) : (
                         <span className="text-rose-500 font-medium italic">Chưa có</span>
+                      )}
+                    </td>
+
+                    {/* OUTPUT 2c: Quốc gia đã phiên (Cột H / Sheet QUOCGIA) */}
+                    <td className="px-3 py-2 bg-emerald-50/20 border-r border-slate-200">
+                      {isEditing ? (
+                        <select
+                          value={editNation}
+                          onChange={(e) => setEditNation(e.target.value)}
+                          className="w-full text-xs py-1 px-1.5 border border-purple-400 rounded bg-white font-medium text-slate-800"
+                        >
+                          {VNCARE_NATIONS.map((nat) => (
+                            <option key={nat} value={nat}>
+                              {nat}
+                            </option>
+                          ))}
+                        </select>
+                      ) : row.isNationMissing ? (
+                        <span
+                          onClick={() => startEdit(row)}
+                          className="font-medium text-rose-800 bg-rose-100/90 hover:bg-rose-200 px-2 py-0.5 rounded border border-rose-300 flex items-center space-x-1 cursor-pointer transition-colors shadow-2xs"
+                          title="Chưa có thông tin quốc gia cho người nước ngoài — Nhấp để chọn Quốc gia"
+                        >
+                          <AlertTriangle className="w-3 h-3 text-rose-600 shrink-0" />
+                          <span>Thiếu QG</span>
+                          <Edit3 className="w-2.5 h-2.5 ml-auto text-rose-700 opacity-70" />
+                        </span>
+                      ) : row.isNationUnresolved ? (
+                        <span
+                          onClick={() => startEdit(row)}
+                          className="font-medium text-amber-900 bg-amber-100/90 hover:bg-amber-200 px-2 py-0.5 rounded border border-amber-300 flex items-center space-x-1 cursor-pointer transition-colors shadow-2xs"
+                          title={`Quốc gia "${row.rawNation}" chưa khớp với danh mục 250 QG VNCare — Mặc định khi phiên: ${row.nationFormatted} (Nhấp để chọn lại)`}
+                        >
+                          <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
+                          <span className="truncate max-w-[130px]">{row.nationFormatted}</span>
+                          <Edit3 className="w-2.5 h-2.5 ml-auto text-amber-700 opacity-70" />
+                        </span>
+                      ) : row.nationFormatted && !row.nationFormatted.startsWith('0-') ? (
+                        <span
+                          onClick={() => startEdit(row)}
+                          className="font-bold text-purple-900 bg-purple-100 hover:bg-purple-200 px-2 py-0.5 rounded border border-purple-300 flex items-center space-x-1 cursor-pointer transition-colors shadow-2xs"
+                          title={`Quốc gia chuẩn VNCare: ${row.nationFormatted} (Bấm để đổi)`}
+                        >
+                          <Globe className="w-3 h-3 text-purple-600 shrink-0" />
+                          <span className="truncate">{row.nationFormatted}</span>
+                        </span>
+                      ) : (
+                        <span
+                          onClick={() => startEdit(row)}
+                          className="font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded border border-slate-200 flex items-center space-x-1 cursor-pointer transition-colors"
+                          title="0-Việt Nam (Bấm để đổi quốc gia nếu là người nước ngoài)"
+                        >
+                          <span className="truncate">{row.nationFormatted || '0-Việt Nam'}</span>
+                        </span>
                       )}
                     </td>
 
@@ -766,6 +883,8 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                               ? 'text-rose-700 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 font-semibold shadow-2xs'
                               : row.isEthnicityMissing || row.isEthnicityUnresolved
                               ? 'text-amber-800 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-300 font-semibold shadow-2xs'
+                              : row.isNationMissing || row.isNationUnresolved
+                              ? 'text-purple-800 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-300 font-semibold shadow-2xs'
                               : row.isPhoneUnusual
                               ? 'text-amber-900 hover:text-amber-950 bg-amber-50 hover:bg-amber-100 border border-amber-400 font-semibold shadow-2xs'
                               : 'text-slate-500 hover:text-sky-600 hover:bg-sky-50'
@@ -775,9 +894,11 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                               ? `Bấm để nhập CCCD cho dòng ${row.stt} (${row.name})`
                               : row.isEthnicityMissing || row.isEthnicityUnresolved
                               ? `Bấm để chọn lại Dân tộc cho dòng ${row.stt} (${row.name})`
+                              : row.isNationMissing || row.isNationUnresolved
+                              ? `Bấm để chọn lại Quốc gia cho dòng ${row.stt} (${row.name})`
                               : row.isPhoneUnusual
                               ? `Bấm để sửa Số điện thoại cho dòng ${row.stt} (${row.name})`
-                              : 'Sửa Tỉnh/Xã/CCCD/Dân tộc/SĐT'
+                              : 'Sửa Tỉnh/Xã/Quốc gia/CCCD/Dân tộc/SĐT'
                           }
                         >
                           <Edit3 className="w-3 h-3" />
@@ -786,6 +907,8 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                               ? 'Nhập CCCD'
                               : row.isEthnicityMissing || row.isEthnicityUnresolved
                               ? 'Sửa DT'
+                              : row.isNationMissing || row.isNationUnresolved
+                              ? 'Sửa QG'
                               : row.isPhoneUnusual
                               ? 'Sửa SĐT'
                               : 'Sửa'}

@@ -1,8 +1,8 @@
 export const APP_META = {
   name: "VNCare Phiên Địa Chỉ 2 Cấp",
   appCode: "DIACHI",
-  version: "1.3.3",
-  releaseDate: "2026-10-15",
+  version: "1.3.4",
+  releaseDate: "2026-10-29",
   author: "Nguyễn Sơn Nam (Nsnnam / NamNS)",
   githubUrl: "https://github.com/Nsnnam/vncare-diachi-web",
   homeRepo: "Nsnnam/vncare-diachi-web",
@@ -19,6 +19,15 @@ export const APP_META = {
     qrPath: "coffee-qr.jpg",
   },
   changelog: [
+    {
+      version: "1.3.4",
+      date: "2026-10-29",
+      highlights: [
+        "Chuẩn hóa danh mục Quốc gia (250 quốc gia theo Sheet QUOCGIA phôi VNCare): Tự động nhận diện và phiên chuẩn mã 'Mã-Tên quốc gia' cho cả người Việt Nam ('0-Việt Nam') và người nước ngoài ('336-Trung quốc', '512-Đài loan', '411-Hàn quốc', '403-Nhật', '517-Hoa kỳ'...).",
+        "Đồng bộ ghi cột Quốc gia ở cả 2 chế độ xuất file: Ghi đè chính xác mã quốc gia đã phiên vào cột Quốc gia của file gốc (Chế độ Điền trực tiếp) và Cột 7 (QUOCGIA) trong mẫu 7 sheet VNCare.",
+        "Cảnh báo & Chỉnh sửa Quốc gia trực quan: Bổ sung cấu hình chọn 'Cột Quốc gia' trong tùy chỉnh cột, hiển thị cột Quốc gia trên Bảng đối chiếu, cảnh báo dòng người nước ngoài thiếu hoặc chưa khớp quốc gia và cho phép chọn 1 chạm từ danh mục 250 quốc gia VNCare."
+      ]
+    },
     {
       version: "1.3.3",
       date: "2026-10-15",

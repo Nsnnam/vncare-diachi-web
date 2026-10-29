@@ -10,6 +10,12 @@ import {
 } from './addressEngine';
 import { getCustomDictRules } from './customDictService';
 import { formatEthnicity, resolveEthnicity, VNCARE_ETHNICITIES } from './ethnicityService';
+import {
+  formatNation,
+  resolveNation,
+  VNCARE_NATIONS,
+  extractCleanNationName,
+} from './nationService';
 
 export interface ParsedWorkbookData {
   workbook: any;
@@ -360,7 +366,18 @@ export function detectColumns(rows: any[][]): {
     }
     if (
       mapping.nationCol === -1 &&
-      (norm.includes('quocgia') || norm.includes('quoc gia') || norm.includes('quoc tich'))
+      (norm === 'qg' ||
+        norm === 'quoc gia' ||
+        norm === 'quocgia' ||
+        norm === 'quoc tich' ||
+        norm === 'quoctich' ||
+        norm === 'country' ||
+        norm === 'nationality' ||
+        norm.includes('quoc gia') ||
+        norm.includes('quoc tich') ||
+        norm.includes('quocgia') ||
+        norm.includes('quoctich') ||
+        norm.includes('nationality'))
     ) {
       mapping.nationCol = idx;
     }
@@ -714,14 +731,6 @@ export function formatJob(val: any, defaultJob: string = '6-Công nhân'): strin
   return defaultJob;
 }
 
-/** Format Nation to VNCare standard catalogue */
-export function formatNation(val: any): string {
-  if (!val) return '0-Việt Nam';
-  const s = String(val).trim();
-  if (/^\d+-/.test(s)) return s;
-  return '0-Việt Nam';
-}
-
 /** Process data rows to resolve addresses and standardize mandatory fields */
 export function processAddressRows(
   dataRows: any[][],
@@ -781,7 +790,12 @@ export function processAddressRows(
     const isEthnicityUnresolved = ethRes.isUnresolved;
 
     const rawNation = mapping.nationCol !== undefined && mapping.nationCol >= 0 ? row[mapping.nationCol] : '';
-    const nationFormatted = formatNation(rawNation);
+    const isForeignEthnicity = ethnicityFormatted === '99-Nước ngoài';
+    const defaultNation = isForeignEthnicity ? '' : '0-Việt Nam';
+    const nationRes = resolveNation(rawNation, defaultNation || '0-Việt Nam');
+    const nationFormatted = nationRes.formatted;
+    const isNationMissing = nationRes.isMissing && isForeignEthnicity;
+    const isNationUnresolved = nationRes.isUnresolved;
 
     const rawPhone = mapping.phoneCol !== undefined && mapping.phoneCol >= 0 ? row[mapping.phoneCol] : '';
     const phoneRes = formatPhone(rawPhone);
@@ -803,7 +817,13 @@ export function processAddressRows(
     } else if (isEthnicityUnresolved) {
       missingFields.push('Dân tộc (Chưa nhận diện)');
     }
-    if (!nationFormatted) missingFields.push('Quốc gia');
+    if (isNationMissing) {
+      missingFields.push('Quốc gia (Thiếu)');
+    } else if (isNationUnresolved) {
+      missingFields.push('Quốc gia (Chưa nhận diện)');
+    } else if (!nationFormatted) {
+      missingFields.push('Quốc gia');
+    }
     if (!rawAddress) missingFields.push('Địa chỉ');
     if (isCccdMissing) {
       missingFields.push('CCCD (Thiếu)');
@@ -838,12 +858,15 @@ export function processAddressRows(
         ethnicityFormatted,
         isEthnicityMissing,
         isEthnicityUnresolved,
+        rawNation: rawNation !== undefined && rawNation !== null ? String(rawNation).trim() : '',
+        nationFormatted,
+        isNationMissing,
+        isNationUnresolved,
         rawPhone: rawPhone !== undefined && rawPhone !== null ? String(rawPhone).trim() : '',
         phoneFormatted,
         isPhoneValid,
         isPhoneMissing,
         isPhoneUnusual,
-        nationFormatted,
         rawAddress: '',
         resolvedTinh: '',
         resolvedXa: '',
@@ -894,12 +917,15 @@ export function processAddressRows(
       ethnicityFormatted,
       isEthnicityMissing,
       isEthnicityUnresolved,
+      rawNation: rawNation !== undefined && rawNation !== null ? String(rawNation).trim() : '',
+      nationFormatted,
+      isNationMissing,
+      isNationUnresolved,
       rawPhone: rawPhone !== undefined && rawPhone !== null ? String(rawPhone).trim() : '',
       phoneFormatted,
       isPhoneValid,
       isPhoneMissing,
       isPhoneUnusual,
-      nationFormatted,
       rawAddress,
       resolvedTinh,
       resolvedXa,
@@ -1073,6 +1099,11 @@ export function exportInplaceFile(
       sheetData[targetRowIdx][wbData.columnMapping.ethnicityCol] = pr.ethnicityFormatted;
     }
 
+    // Nation formatting (standardized Mã-Quốc gia)
+    if (wbData.columnMapping.nationCol !== undefined && wbData.columnMapping.nationCol >= 0) {
+      sheetData[targetRowIdx][wbData.columnMapping.nationCol] = pr.nationFormatted;
+    }
+
     // Phone formatting (10 digits continuous, text general @ format)
     if (wbData.columnMapping.phoneCol !== undefined && wbData.columnMapping.phoneCol >= 0) {
       sheetData[targetRowIdx][wbData.columnMapping.phoneCol] = pr.phoneFormatted || '';
@@ -1136,14 +1167,8 @@ function createVncareLookupWorkbook(): any {
   applyTimesNewRomanStyles(wsXa, xaRows, 0, []);
   XLSX.utils.book_append_sheet(wb, wsXa, 'XA');
 
-  // Sheet QUOCGIA
-  const qgRows: any[][] = [
-    ['QUOCGIA'],
-    ['0-Việt Nam'],
-    ['292-Andorra'],
-    ['293-United arab emirates'],
-    ['294-Antigua and barbuda'],
-  ];
+  // Sheet QUOCGIA (All 250 standard nations from VNCare template)
+  const qgRows: any[][] = [['QUOCGIA'], ...VNCARE_NATIONS.map((n) => [n])];
   const wsQg = XLSX.utils.aoa_to_sheet(qgRows);
   applyTimesNewRomanStyles(wsQg, qgRows, 0, []);
   XLSX.utils.book_append_sheet(wb, wsQg, 'QUOCGIA');

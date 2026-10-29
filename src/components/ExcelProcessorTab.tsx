@@ -21,7 +21,8 @@ import {
   Hash,
   Sparkles,
   CheckCheck,
-  Phone
+  Phone,
+  Globe
 } from 'lucide-react';
 import { ColumnMapping, ProcessedRow, ProcessingMode } from '../types';
 import {
@@ -38,6 +39,7 @@ import {
 } from '../services/excelService';
 import { extractCleanAdminName, formatAddress2Tier } from '../services/addressEngine';
 import { formatEthnicity, resolveEthnicity } from '../services/ethnicityService';
+import { resolveNation, VNCARE_NATIONS } from '../services/nationService';
 import { addOrUpdateCustomRule } from '../services/customDictService';
 import { PreviewTable } from './PreviewTable';
 import { UnmappedDrawer } from './UnmappedDrawer';
@@ -177,7 +179,8 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
     saveToDict: boolean = false,
     newCccd?: string,
     newEthnicity?: string,
-    newPhone?: string
+    newPhone?: string,
+    newNation?: string
   ) => {
     setProcessedRows((prev) => {
       const updated = [...prev];
@@ -228,6 +231,23 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
             target.missingFields.push('Dân tộc (Thiếu)');
           } else if (ethRes.isUnresolved) {
             target.missingFields.push('Dân tộc (Chưa khớp)');
+          }
+        }
+
+        if (newNation !== undefined) {
+          target.rawNation = newNation;
+          const isForeign = target.ethnicityFormatted === '99-Nước ngoài';
+          const nationRes = resolveNation(newNation, isForeign ? '' : '0-Việt Nam');
+          target.nationFormatted = nationRes.formatted;
+          target.isNationMissing = nationRes.isMissing && isForeign;
+          target.isNationUnresolved = nationRes.isUnresolved;
+          target.missingFields = target.missingFields.filter((f) => !f.startsWith('Quốc gia'));
+          if (target.isNationMissing) {
+            target.missingFields.push('Quốc gia (Thiếu)');
+          } else if (target.isNationUnresolved) {
+            target.missingFields.push('Quốc gia (Chưa nhận diện)');
+          } else if (!target.nationFormatted) {
+            target.missingFields.push('Quốc gia');
           }
         }
 
@@ -330,6 +350,8 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
   const countMissingCccd = missingCccdRows.length;
   const missingEthnicityRows = processedRows.filter((r) => r.isEthnicityMissing || r.isEthnicityUnresolved);
   const countMissingEthnicity = missingEthnicityRows.length;
+  const missingNationRows = processedRows.filter((r) => r.isNationMissing || r.isNationUnresolved);
+  const countMissingNation = missingNationRows.length;
   const unusualPhoneRows = processedRows.filter((r) => r.isPhoneUnusual);
   const countUnusualPhone = unusualPhoneRows.length;
   const successCount = count3Cap + count2Cap + customCount;
@@ -846,6 +868,24 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
 
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-200">
                       <div>
+                        <label className="block font-semibold text-slate-700 mb-1">
+                          Cột Quốc gia (Chuẩn hóa 250 QG):
+                        </label>
+                        <select
+                          value={mapping.nationCol ?? -1}
+                          onChange={(e) => setMapping({ ...mapping, nationCol: Number(e.target.value) })}
+                          className="w-full p-2 border border-sky-300 rounded-lg bg-white font-medium text-sky-900"
+                        >
+                          <option value={-1}>-- Tự động nhận diện --</option>
+                          {wbData.headers.map((h, i) => (
+                            <option key={i} value={i}>
+                              Cột {String.fromCharCode(65 + i)}: {h}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
                         <label className="block font-semibold text-slate-700 mb-1">Cột Nghề nghiệp:</label>
                         <select
                           value={mapping.jobCol ?? -1}
@@ -892,7 +932,9 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
                           ))}
                         </select>
                       </div>
+                    </div>
 
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-200">
                       <div>
                         <label className="block font-semibold text-slate-700 mb-1">
                           Mã Đợt khám (YYYYMM):
@@ -913,9 +955,7 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
                           </span>
                         )}
                       </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-200">
                       <div>
                         <label className="block font-semibold text-slate-700 mb-1">Nơi làm việc mặc định (khi file thiếu):</label>
                         <input
@@ -1046,6 +1086,16 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
                     title="Nhấp để lọc xem danh sách người thiếu hoặc chưa khớp mã Dân tộc"
                   >
                     ⚠ {countMissingEthnicity} dòng thiếu/chưa khớp DT
+                  </button>
+                )}
+                {countMissingNation > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setTableFilter('missing_nation')}
+                    className="bg-purple-400/30 text-purple-200 px-2.5 py-0.5 rounded-md backdrop-blur-xs border border-purple-300/40 font-bold hover:bg-purple-400/40 transition-colors cursor-pointer"
+                    title="Nhấp để lọc xem danh sách người thiếu hoặc chưa khớp mã Quốc gia"
+                  >
+                    ⚠ {countMissingNation} dòng thiếu/chưa khớp QG
                   </button>
                 )}
                 {countUnusualPhone > 0 && (
@@ -1272,6 +1322,31 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
                   <div className="text-2xl font-extrabold text-amber-950 mt-1">{countUnusualPhone}</div>
                   <div className="text-[11px] text-amber-700 truncate mt-0.5">
                     Bấm lọc SĐT lạ ➔
+                  </div>
+                </div>
+              )}
+
+              {/* Card 7b: Missing/Unresolved Nation (if any) */}
+              {countMissingNation > 0 && (
+                <div
+                  onClick={() => setTableFilter('missing_nation')}
+                  className={`p-3 rounded-xl border transition-all cursor-pointer ${
+                    tableFilter === 'missing_nation'
+                      ? 'bg-purple-50 border-purple-400 ring-2 ring-purple-400 shadow-sm'
+                      : 'bg-purple-50/60 border-purple-200 hover:border-purple-300 hover:shadow-2xs'
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-purple-800 text-xs font-semibold">
+                    <span className="flex items-center">
+                      <Globe className="w-3.5 h-3.5 mr-1 text-purple-600" /> Quốc gia
+                    </span>
+                    <span className="text-[10px] bg-purple-100 text-purple-800 px-1.5 py-0.2 rounded font-semibold animate-pulse">
+                      Cần khớp
+                    </span>
+                  </div>
+                  <div className="text-2xl font-extrabold text-purple-950 mt-1">{countMissingNation}</div>
+                  <div className="text-[11px] text-purple-700 truncate mt-0.5">
+                    Bấm lọc dòng chưa chuẩn QG ➔
                   </div>
                 </div>
               )}

@@ -1,8 +1,8 @@
-# VNCare Phiên Địa Chỉ 2 Cấp (Web & Offline v1.3.3)
+# VNCare Phiên Địa Chỉ 2 Cấp (Web & Offline v1.3.4)
 
-> **Công cụ tự động nhận diện, phân tích và phiên mã địa chỉ hành chính 2 cấp (Tỉnh/TP và Xã/Phường), chuyển đổi địa chỉ 3 cấp cũ sang chuẩn VNCare / VNPT-HIS từ file Excel. Hoạt động 100% Offline bảo mật dữ liệu y tế, chuẩn hóa định dạng Times New Roman 13pt, chuẩn hóa số điện thoại 10 số (Text General @), quản lý 65 dân tộc và tùy biến cột linh hoạt.**
+> **Công cụ tự động nhận diện, phân tích và phiên mã địa chỉ hành chính 2 cấp (Tỉnh/TP và Xã/Phường), chuyển đổi địa chỉ 3 cấp cũ sang chuẩn VNCare / VNPT-HIS từ file Excel. Hoạt động 100% Offline bảo mật dữ liệu y tế, chuẩn hóa định dạng Times New Roman 13pt, chuẩn hóa số điện thoại 10 số (Text General @), quản lý 65 dân tộc, phiên chuẩn 250 quốc gia VNCare và tùy biến cột linh hoạt.**
 
-[![Version](https://img.shields.io/badge/version-1.3.3-blue.svg)](https://github.com/Nsnnam/vncare-diachi-web)
+[![Version](https://img.shields.io/badge/version-1.3.4-blue.svg)](https://github.com/Nsnnam/vncare-diachi-web)
 [![Offline First](https://img.shields.io/badge/offline--first-100%25-emerald.svg)](https://nsnnam.github.io/vncare-diachi-web/)
 [![Standard](https://img.shields.io/badge/standard-NSN_App_Standard-indigo.svg)](https://github.com/Nsnnam)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -10,24 +10,34 @@
 
 ---
 
-## Bảng Thông Tin Phát Hành (v1.3.3)
+## Bảng Thông Tin Phát Hành (v1.3.4)
 
 | Thông tin | Chi tiết |
 |---|---|
-| **Phiên bản hiện tại** | `v1.3.3` |
-| **Ngày cập nhật** | 15/10/2026 |
+| **Phiên bản hiện tại** | `v1.3.4` |
+| **Ngày cập nhật** | 29/10/2026 |
 | **Tác giả** | [Nguyễn Sơn Nam (Nsnnam / NamNS)](https://github.com/Nsnnam) |
 | **Múi giờ chuẩn** | GMT+7 (`Asia/Ho_Chi_Minh`) |
 | **Kho mã nguồn** | [https://github.com/Nsnnam/vncare-diachi-web](https://github.com/Nsnnam/vncare-diachi-web) |
 | **Trang trực tuyến (Live)** | [https://nsnnam.github.io/vncare-diachi-web/](https://nsnnam.github.io/vncare-diachi-web/) |
-| **Bản chạy Offline Single-file HTML** | [`releases/vncare-diachi-web-v1.3.3-offline.html`](./releases/vncare-diachi-web-v1.3.3-offline.html) *(Mở trực tiếp trên Chrome, Edge, Cốc Cốc không cần mạng)* |
+| **Bản chạy Offline Single-file HTML** | [`releases/vncare-diachi-web-v1.3.4-offline.html`](./releases/vncare-diachi-web-v1.3.4-offline.html) *(Mở trực tiếp trên Chrome, Edge, Cốc Cốc không cần mạng)* |
 | **Font giao diện** | **Be Vietnam Pro** (Thiết kế tối ưu tiếng Việt) |
 | **Font file Excel xuất ra** | **Times New Roman 13pt**, kẻ ô viền (borders), giãn dòng theo nội dung |
 | **Mật mã mở khóa mặc định** | `namns` (mã băm SHA-256 an toàn) |
 
 ---
 
-## Các Tính Năng Mới & Sửa Đổi Nổi Bật của Phiên Bản v1.3.3
+## Các Tính Năng Mới & Sửa Đổi Nổi Bật của Phiên Bản v1.3.4
+
+### 1. Chuẩn hóa Quốc Gia 250 Mã theo Sheet `QUOCGIA` phôi VNCare
+- **Phiên chuẩn cho người Việt Nam và Người nước ngoài:** Tự động tra cứu và phiên đúng mã chuẩn VNCare (`0-Việt Nam`, `336-Trung quốc`, `512-Đài loan`, `411-Hàn quốc`, `403-Nhật`, `517-Hoa kỳ`...).
+- **Từ điển thông minh & Mã nhận diện:** Nhận diện cả tên tiếng Việt có dấu/không dấu, tên quốc tế tiếng Anh (`China`, `Taiwan`, `Korea`, `USA`...), tên viết tắt và mã số trực tiếp (`336`, `512`, `411`...).
+- **Đồng bộ xuất file ở cả 2 chế độ:** Ghi đè chính xác mã quốc gia đã phiên vào cột Quốc gia của file gốc (Chế độ 1: Điền trực tiếp) và Cột 7 (`QUOCGIA`) trong mẫu chuẩn 7 sheet VNCare (Chế độ 2).
+- **Cảnh báo & Chỉnh sửa trực quan:** Thêm cấu hình chọn "Cột Quốc gia" trong bảng tùy chọn cột; hiển thị cột Quốc gia trên Bảng đối chiếu; tự động phát hiện và bật cảnh báo màu tím cho dòng người nước ngoài thiếu hoặc chưa khớp quốc gia; cho phép chọn 1 chạm từ danh mục 250 quốc gia VNCare.
+
+---
+
+## Các Tính Năng & Sửa Đổi của Phiên Bản v1.3.3
 
 ### 1. Chuẩn hóa Số Điện Thoại 10 số (Định dạng Text General `@`)
 - **Bảo toàn số 0 ở đầu:** Tự động thiết lập định dạng Text General (`cell.t = 's'`, `cell.z = '@'`) cho cột Số điện thoại (`SDTBENHNHAN` / `phoneCol`) trong file Excel xuất ra, loại bỏ hoàn toàn hiện tượng Excel tự động chuyển thành Number làm mất số `0` ở đầu.

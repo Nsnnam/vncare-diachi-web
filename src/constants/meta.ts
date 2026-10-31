@@ -1,8 +1,8 @@
 export const APP_META = {
   name: "VNCare Phiên Địa Chỉ 2 Cấp",
   appCode: "DIACHI",
-  version: "1.3.4",
-  releaseDate: "2026-10-29",
+  version: "1.3.5",
+  releaseDate: "2026-10-31",
   author: "Nguyễn Sơn Nam (Nsnnam / NamNS)",
   githubUrl: "https://github.com/Nsnnam/vncare-diachi-web",
   homeRepo: "Nsnnam/vncare-diachi-web",
@@ -19,6 +19,15 @@ export const APP_META = {
     qrPath: "coffee-qr.jpg",
   },
   changelog: [
+    {
+      version: "1.3.5",
+      date: "2026-10-31",
+      highlights: [
+        "Chuẩn hóa VIẾT HOA toàn bộ cột Họ và Tên ở file đầu ra: Tự động chuyển đổi toàn bộ tên người bệnh/cán bộ (Họ và Tên, Họ tên, Tên...) sang chữ in hoa (UPPERCASE) theo đúng quy chuẩn hồ sơ bệnh án điện tử và cổng tiếp nhận KSK VNCare.",
+        "Đồng bộ ghi đè cột Họ và tên ở cả 2 chế độ xuất file: Ghi đè trực tiếp tên đã viết hoa vào cột Họ và tên của file gốc (Chế độ Điền trực tiếp) và Cột 1 (TENBENHNHAN) trong mẫu 7 sheet VNCare.",
+        "Hiển thị đối chiếu Họ tên trực quan: Trên Bảng đối chiếu, hiển thị nổi bật tên in hoa đã chuẩn hóa và hiển thị tên gốc nếu có sự thay đổi giữa chữ thường/chữ hoa giúp nhân viên y tế kiểm tra dễ dàng."
+      ]
+    },
     {
       version: "1.3.4",
       date: "2026-10-29",

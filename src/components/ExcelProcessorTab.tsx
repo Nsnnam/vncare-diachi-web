@@ -152,6 +152,9 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
       return;
     }
 
+    // Sync column mapping into active workbook
+    wbData.columnMapping = { ...mapping };
+
     setLoading(true);
     setTimeout(() => {
       try {
@@ -317,6 +320,7 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
           dotKham,
           includeAddress2Tier,
           address2TierWithDetail,
+          mapping,
         });
         const nameWithoutExt = wbData.fileName.replace(/\.[^/.]+$/, '');
         const filename = generateOutputFilename(`${nameWithoutExt}_PhienDiaChi`);
@@ -1032,11 +1036,14 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
               </h3>
 
               <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
-                Đã phiên thành công <strong>{successCount}/{totalRows} dòng</strong> ({successRate}%). Định dạng sẵn sàng nạp cổng KSK: <strong>STT 1..N</strong>, kiểu <strong>Text General (@)</strong>, <strong>Ngày sinh DD/MM/YYYY</strong>, <strong>CCCD 12 số</strong> và <strong>Times New Roman 13pt</strong>.
+                Đã phiên thành công <strong>{successCount}/{totalRows} dòng</strong> ({successRate}%). Định dạng sẵn sàng nạp cổng KSK: <strong>STT 1..N</strong>, <strong>Họ tên VIẾT HOA</strong>, kiểu <strong>Text General (@)</strong>, <strong>Ngày sinh DD/MM/YYYY</strong>, <strong>CCCD 12 số</strong> và <strong>Times New Roman 13pt</strong>.
               </p>
 
               {/* Specification tags */}
               <div className="flex flex-wrap gap-2 pt-1 text-[11px] text-emerald-50">
+                <span className="bg-black/20 px-2.5 py-0.5 rounded-md backdrop-blur-xs border border-white/15">
+                  ✓ VIẾT HOA Họ và Tên
+                </span>
                 <span className="bg-black/20 px-2.5 py-0.5 rounded-md backdrop-blur-xs border border-white/15">
                   ✓ Font Times New Roman 13pt
                 </span>

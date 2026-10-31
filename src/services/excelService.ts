@@ -731,6 +731,17 @@ export function formatJob(val: any, defaultJob: string = '6-Công nhân'): strin
   return defaultJob;
 }
 
+/**
+ * Chuẩn hóa Họ và Tên: viết hoa toàn bộ (UPPERCASE), loại bỏ khoảng trắng thừa
+ * Ví dụ: " nguyễn  văn  a " -> "NGUYỄN VĂN A"
+ */
+export function formatPatientName(val: any, fallback: string = ''): string {
+  if (val === null || val === undefined) return fallback;
+  const s = String(val).trim().replace(/\s+/g, ' ');
+  if (!s) return fallback;
+  return s.toUpperCase();
+}
+
 /** Process data rows to resolve addresses and standardize mandatory fields */
 export function processAddressRows(
   dataRows: any[][],
@@ -752,7 +763,8 @@ export function processAddressRows(
     const seqNumber = idx + 1;
     const stt = String(seqNumber);
 
-    const name = mapping.nameCol !== undefined && mapping.nameCol >= 0 ? String(row[mapping.nameCol] || '').trim() : '';
+    const rawName = mapping.nameCol !== undefined && mapping.nameCol >= 0 ? String(row[mapping.nameCol] || '').trim() : '';
+    const name = formatPatientName(rawName) || `BỆNH NHÂN ${seqNumber}`;
     const rawDob = mapping.dobCol !== undefined && mapping.dobCol >= 0 ? row[mapping.dobCol] : '';
     const dobFormatted = formatDate(rawDob, '01/01/1990');
     const isDobValid = isDateFormatValid(dobFormatted);
@@ -808,7 +820,7 @@ export function processAddressRows(
 
     // Check mandatory fields: STT, Tên BN, Ngày sinh, Giới tính, Nghề nghiệp, Dân tộc, Quốc gia, Tỉnh, Xã, Địa chỉ, CCCD
     const missingFields: string[] = [];
-    if (!name) missingFields.push('Tên bệnh nhân');
+    if (!rawName) missingFields.push('Tên bệnh nhân');
     if (!dobFormatted || !isDobValid) missingFields.push('Ngày sinh');
     if (!genderFormatted) missingFields.push('Giới tính');
     if (!jobFormatted) missingFields.push('Nghề nghiệp');
@@ -839,7 +851,8 @@ export function processAddressRows(
       results.push({
         rowIndex: idx,
         stt,
-        name: name || `Bệnh nhân ${seqNumber}`,
+        name,
+        rawName,
         rawDob: rawDob !== undefined && rawDob !== null ? String(rawDob) : '',
         dobFormatted,
         isDobValid,
@@ -898,7 +911,8 @@ export function processAddressRows(
     results.push({
       rowIndex: idx,
       stt,
-      name: name || `Bệnh nhân ${seqNumber}`,
+      name,
+      rawName,
       rawDob: rawDob !== undefined && rawDob !== null ? String(rawDob) : '',
       dobFormatted,
       isDobValid,
@@ -953,6 +967,7 @@ export function exportInplaceFile(
     dotKham?: string;
     includeAddress2Tier?: boolean;
     address2TierWithDetail?: boolean;
+    mapping?: ColumnMapping;
   } = {}
 ): Uint8Array {
   // Always create an isolated working workbook clone so we never mutate the active React state workbook
@@ -975,9 +990,10 @@ export function exportInplaceFile(
   const sheet = workingWb.Sheets[wbData.activeSheet];
   const sheetData: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
 
-  let tinhCol = wbData.columnMapping.tinhCol;
-  let xaCol = wbData.columnMapping.xaCol;
-  let sttCol = wbData.columnMapping.sttCol ?? 0;
+  const mapping = options.mapping || wbData.columnMapping;
+  let tinhCol = mapping.tinhCol;
+  let xaCol = mapping.xaCol;
+  let sttCol = mapping.sttCol ?? 0;
   const headerRow = sheetData[wbData.headerRowIndex] || [];
 
   // Check if headerRow already has TINH or XA columns before appending new ones
@@ -1048,6 +1064,11 @@ export function exportInplaceFile(
       sheetData[targetRowIdx][sttCol] = String(pr.stt);
     }
 
+    // Name formatting (viết hoa toàn bộ Họ và Tên theo chuẩn)
+    if (mapping.nameCol !== undefined && mapping.nameCol >= 0) {
+      sheetData[targetRowIdx][mapping.nameCol] = pr.name;
+    }
+
     // Tinh and Xa (with code)
     if (pr.resolvedTinh) {
       sheetData[targetRowIdx][tinhCol!] = pr.resolvedTinh;
@@ -1065,48 +1086,48 @@ export function exportInplaceFile(
     }
 
     // DOB formatting
-    if (wbData.columnMapping.dobCol !== undefined && wbData.columnMapping.dobCol >= 0) {
-      sheetData[targetRowIdx][wbData.columnMapping.dobCol] = pr.dobFormatted;
+    if (mapping.dobCol !== undefined && mapping.dobCol >= 0) {
+      sheetData[targetRowIdx][mapping.dobCol] = pr.dobFormatted;
     }
 
     // Gender formatting
-    if (wbData.columnMapping.genderCol !== undefined && wbData.columnMapping.genderCol >= 0) {
-      sheetData[targetRowIdx][wbData.columnMapping.genderCol] = pr.genderFormatted;
+    if (mapping.genderCol !== undefined && mapping.genderCol >= 0) {
+      sheetData[targetRowIdx][mapping.genderCol] = pr.genderFormatted;
     }
 
     // CCCD formatting (preserving text format, blank if missing)
-    if (wbData.columnMapping.cccdCol !== undefined && wbData.columnMapping.cccdCol >= 0) {
-      sheetData[targetRowIdx][wbData.columnMapping.cccdCol] = pr.cccdFormatted || '';
+    if (mapping.cccdCol !== undefined && mapping.cccdCol >= 0) {
+      sheetData[targetRowIdx][mapping.cccdCol] = pr.cccdFormatted || '';
     }
 
     // CCCD Date formatting
-    if (wbData.columnMapping.cccdDateCol !== undefined && wbData.columnMapping.cccdDateCol >= 0) {
-      sheetData[targetRowIdx][wbData.columnMapping.cccdDateCol] = pr.cccdDateFormatted;
+    if (mapping.cccdDateCol !== undefined && mapping.cccdDateCol >= 0) {
+      sheetData[targetRowIdx][mapping.cccdDateCol] = pr.cccdDateFormatted;
     }
 
     // DotKham if column exists
-    if (wbData.columnMapping.dotKhamCol !== undefined && wbData.columnMapping.dotKhamCol >= 0) {
-      sheetData[targetRowIdx][wbData.columnMapping.dotKhamCol] = dotKham;
+    if (mapping.dotKhamCol !== undefined && mapping.dotKhamCol >= 0) {
+      sheetData[targetRowIdx][mapping.dotKhamCol] = dotKham;
     }
 
     // Job formatting
-    if (wbData.columnMapping.jobCol !== undefined && wbData.columnMapping.jobCol >= 0) {
-      sheetData[targetRowIdx][wbData.columnMapping.jobCol] = pr.jobFormatted;
+    if (mapping.jobCol !== undefined && mapping.jobCol >= 0) {
+      sheetData[targetRowIdx][mapping.jobCol] = pr.jobFormatted;
     }
 
     // Ethnicity formatting
-    if (wbData.columnMapping.ethnicityCol !== undefined && wbData.columnMapping.ethnicityCol >= 0) {
-      sheetData[targetRowIdx][wbData.columnMapping.ethnicityCol] = pr.ethnicityFormatted;
+    if (mapping.ethnicityCol !== undefined && mapping.ethnicityCol >= 0) {
+      sheetData[targetRowIdx][mapping.ethnicityCol] = pr.ethnicityFormatted;
     }
 
     // Nation formatting (standardized Mã-Quốc gia)
-    if (wbData.columnMapping.nationCol !== undefined && wbData.columnMapping.nationCol >= 0) {
-      sheetData[targetRowIdx][wbData.columnMapping.nationCol] = pr.nationFormatted;
+    if (mapping.nationCol !== undefined && mapping.nationCol >= 0) {
+      sheetData[targetRowIdx][mapping.nationCol] = pr.nationFormatted;
     }
 
     // Phone formatting (10 digits continuous, text general @ format)
-    if (wbData.columnMapping.phoneCol !== undefined && wbData.columnMapping.phoneCol >= 0) {
-      sheetData[targetRowIdx][wbData.columnMapping.phoneCol] = pr.phoneFormatted || '';
+    if (mapping.phoneCol !== undefined && mapping.phoneCol >= 0) {
+      sheetData[targetRowIdx][mapping.phoneCol] = pr.phoneFormatted || '';
     }
   });
 
@@ -1121,12 +1142,12 @@ export function exportInplaceFile(
   // Apply Times New Roman 13, Borders, Auto-fit rows and columns, Text general format
   applyTimesNewRomanStyles(newSheet, sheetData, wbData.headerRowIndex, [
     sttCol,
-    wbData.columnMapping.dobCol ?? -1,
-    wbData.columnMapping.genderCol ?? -1,
-    wbData.columnMapping.cccdCol ?? -1,
-    wbData.columnMapping.cccdDateCol ?? -1,
-    wbData.columnMapping.dotKhamCol ?? -1,
-    wbData.columnMapping.phoneCol ?? -1,
+    mapping.dobCol ?? -1,
+    mapping.genderCol ?? -1,
+    mapping.cccdCol ?? -1,
+    mapping.cccdDateCol ?? -1,
+    mapping.dotKhamCol ?? -1,
+    mapping.phoneCol ?? -1,
   ]);
 
   workingWb.Sheets[wbData.activeSheet] = newSheet;
@@ -1270,7 +1291,10 @@ export async function exportVncareTemplateFile(
 
     // All mandatory fields guaranteed populated
     const stt = String(seq);
-    const name = pr.name || (mapping.nameCol !== undefined && mapping.nameCol >= 0 ? String(orig[mapping.nameCol] || '').trim() : '') || `Bệnh nhân ${seq}`;
+    const name = formatPatientName(
+      pr.name || (mapping.nameCol !== undefined && mapping.nameCol >= 0 ? String(orig[mapping.nameCol] || '').trim() : ''),
+      `BỆNH NHÂN ${seq}`
+    );
     const dob = pr.dobFormatted || '01/01/1990';
     const gender = pr.genderFormatted || '1-NAM';
     const job = pr.jobFormatted || defaultJob;

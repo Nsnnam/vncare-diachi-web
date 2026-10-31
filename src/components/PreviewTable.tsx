@@ -101,7 +101,9 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
       if (searchTerm.trim()) {
         const q = searchTerm.toLowerCase();
         const inAddr = r.rawAddress.toLowerCase().includes(q);
-        const inName = (r.name || '').toLowerCase().includes(q);
+        const inName =
+          (r.name || '').toLowerCase().includes(q) ||
+          (r.rawName || '').toLowerCase().includes(q);
         const inTinh = r.resolvedTinh.toLowerCase().includes(q);
         const inXa = r.resolvedXa.toLowerCase().includes(q);
         const inAddr2Tier = (r.address2Tier || '').toLowerCase().includes(q);
@@ -467,7 +469,14 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                     {/* INPUT 2: Họ và tên */}
                     <td className="px-3 py-2 font-medium text-slate-900 border-r border-slate-200">
                       <div className="flex items-center space-x-1.5 flex-wrap">
-                        <span className="font-semibold">{row.name || <span className="text-amber-600 italic">Bệnh nhân {row.stt}</span>}</span>
+                        <span className="font-bold text-slate-900 tracking-tight" title={row.rawName ? `Họ tên đã viết hoa. Gốc trong file: "${row.rawName}"` : undefined}>
+                          {row.name || <span className="text-amber-600 italic">BỆNH NHÂN {row.stt}</span>}
+                        </span>
+                        {row.rawName && row.rawName.trim().toUpperCase() !== row.rawName.trim() && (
+                          <span className="text-[9px] bg-slate-100 text-slate-500 font-normal px-1 py-0.2 rounded border border-slate-200 shrink-0" title={`Gốc trong file: ${row.rawName}`}>
+                            Gốc: {row.rawName}
+                          </span>
+                        )}
                         {row.isCccdMissing && (
                           <span className="text-[9px] bg-rose-100 text-rose-700 font-bold px-1.5 py-0.2 rounded border border-rose-200 shrink-0" title="Chưa có số CCCD">
                             Thiếu CCCD

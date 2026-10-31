@@ -78,7 +78,8 @@ export interface ColumnMapping {
 export interface ProcessedRow {
   rowIndex: number; // 0-based index in data
   stt: number | string;
-  name: string;
+  name: string; // Tên bệnh nhân chuẩn hóa VIẾT HOA TOÀN BỘ (UPPERCASE)
+  rawName?: string; // Tên gốc đọc từ file nạp
   rawDob?: string;
   dobFormatted: string;
   isDobValid: boolean;

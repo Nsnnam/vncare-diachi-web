@@ -1,8 +1,8 @@
-# VNCare Phiên Địa Chỉ 2 Cấp (Web & Offline v1.3.4)
+# VNCare Phiên Địa Chỉ 2 Cấp (Web & Offline v1.3.5)
 
-> **Công cụ tự động nhận diện, phân tích và phiên mã địa chỉ hành chính 2 cấp (Tỉnh/TP và Xã/Phường), chuyển đổi địa chỉ 3 cấp cũ sang chuẩn VNCare / VNPT-HIS từ file Excel. Hoạt động 100% Offline bảo mật dữ liệu y tế, chuẩn hóa định dạng Times New Roman 13pt, chuẩn hóa số điện thoại 10 số (Text General @), quản lý 65 dân tộc, phiên chuẩn 250 quốc gia VNCare và tùy biến cột linh hoạt.**
+> **Công cụ tự động nhận diện, phân tích và phiên mã địa chỉ hành chính 2 cấp (Tỉnh/TP và Xã/Phường), chuyển đổi địa chỉ 3 cấp cũ sang chuẩn VNCare / VNPT-HIS từ file Excel. Hoạt động 100% Offline bảo mật dữ liệu y tế, chuẩn hóa định dạng Times New Roman 13pt, chuẩn hóa viết hoa toàn bộ Họ và Tên, chuẩn hóa số điện thoại 10 số (Text General @), quản lý 65 dân tộc, phiên chuẩn 250 quốc gia VNCare và tùy biến cột linh hoạt.**
 
-[![Version](https://img.shields.io/badge/version-1.3.4-blue.svg)](https://github.com/Nsnnam/vncare-diachi-web)
+[![Version](https://img.shields.io/badge/version-1.3.5-blue.svg)](https://github.com/Nsnnam/vncare-diachi-web)
 [![Offline First](https://img.shields.io/badge/offline--first-100%25-emerald.svg)](https://nsnnam.github.io/vncare-diachi-web/)
 [![Standard](https://img.shields.io/badge/standard-NSN_App_Standard-indigo.svg)](https://github.com/Nsnnam)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -10,24 +10,41 @@
 
 ---
 
-## Bảng Thông Tin Phát Hành (v1.3.4)
+## Bảng Thông Tin Phát Hành (v1.3.5)
 
 | Thông tin | Chi tiết |
 |---|---|
-| **Phiên bản hiện tại** | `v1.3.4` |
-| **Ngày cập nhật** | 29/10/2026 |
+| **Phiên bản hiện tại** | `v1.3.5` |
+| **Ngày cập nhật** | 31/10/2026 |
 | **Tác giả** | [Nguyễn Sơn Nam (Nsnnam / NamNS)](https://github.com/Nsnnam) |
 | **Múi giờ chuẩn** | GMT+7 (`Asia/Ho_Chi_Minh`) |
 | **Kho mã nguồn** | [https://github.com/Nsnnam/vncare-diachi-web](https://github.com/Nsnnam/vncare-diachi-web) |
 | **Trang trực tuyến (Live)** | [https://nsnnam.github.io/vncare-diachi-web/](https://nsnnam.github.io/vncare-diachi-web/) |
-| **Bản chạy Offline Single-file HTML** | [`releases/vncare-diachi-web-v1.3.4-offline.html`](./releases/vncare-diachi-web-v1.3.4-offline.html) *(Mở trực tiếp trên Chrome, Edge, Cốc Cốc không cần mạng)* |
+| **Bản chạy Offline Single-file HTML** | [`releases/vncare-diachi-web-v1.3.5-offline.html`](./releases/vncare-diachi-web-v1.3.5-offline.html) *(Mở trực tiếp trên Chrome, Edge, Cốc Cốc không cần mạng)* |
 | **Font giao diện** | **Be Vietnam Pro** (Thiết kế tối ưu tiếng Việt) |
 | **Font file Excel xuất ra** | **Times New Roman 13pt**, kẻ ô viền (borders), giãn dòng theo nội dung |
 | **Mật mã mở khóa mặc định** | `namns` (mã băm SHA-256 an toàn) |
 
 ---
 
-## Các Tính Năng Mới & Sửa Đổi Nổi Bật của Phiên Bản v1.3.4
+## Các Tính Năng Mới & Sửa Đổi Nổi Bật của Phiên Bản v1.3.5
+
+### 1. Chuẩn hóa VIẾT HOA Toàn Bộ Cột Họ và Tên (Họ tên, Tên...) ở File Đầu Ra
+- **Chuẩn hóa chữ in hoa (UPPERCASE) toàn bộ cột Họ và Tên:**
+  - Tự động chuẩn hóa toàn bộ tên người bệnh/cán bộ nhân viên sang chữ in hoa (`val.toUpperCase()`) và làm sạch các khoảng trắng thừa giữa các từ.
+  - Áp dụng chuẩn hóa cho mọi cách đặt tiêu đề cột: "Họ và tên", "Họ tên", "Họ và Tên", "Tên", "TENBENHNHAN", "Họ và tên bệnh nhân"...
+  - Đảm bảo 100% tuân thủ quy chuẩn định dạng hồ sơ bệnh án điện tử và cổng tiếp nhận dữ liệu KSK của VNCare / VNPT-HIS.
+- **Đồng bộ ghi đè cột Họ và tên ở cả 2 chế độ xuất file:**
+  - **Chế độ 1 (Điền trực tiếp):** Tự động ghi đè tên đã chuẩn hóa viết hoa vào cột Họ và tên gốc trong file Excel xuất ra.
+  - **Chế độ 2 (Mẫu 7 sheet VNCare):** Ghi tên viết hoa toàn bộ vào Cột 1 (`TENBENHNHAN`) trong sheet `DANHSACH`.
+- **Giao diện đối chiếu Họ và tên trực quan:**
+  - Bảng đối chiếu hiển thị nổi bật tên in hoa đã chuẩn hóa (`NGUYỄN VĂN A`, `XIAO YONG LIANG`...).
+  - Tự động hiển thị chú thích tên gốc trong file nạp nếu có sự khác biệt về kiểu chữ hoa/thường (`Gốc: nguyễn văn a`), giúp nhân viên y tế đối chiếu tức thì mà không cần mở lại file gốc.
+  - Bổ sung thông tin chuẩn hóa viết hoa vào Băng hành động xuất file (Hero Banner).
+
+---
+
+## Các Tính Năng & Sửa Đổi của Phiên Bản v1.3.4
 
 ### 1. Chuẩn hóa Quốc Gia 250 Mã theo Sheet `QUOCGIA` phôi VNCare
 - **Phiên chuẩn cho người Việt Nam và Người nước ngoài:** Tự động tra cứu và phiên đúng mã chuẩn VNCare (`0-Việt Nam`, `336-Trung quốc`, `512-Đài loan`, `411-Hàn quốc`, `403-Nhật`, `517-Hoa kỳ`...).

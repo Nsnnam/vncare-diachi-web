@@ -2,6 +2,21 @@
 
 Toàn bộ các thay đổi của dự án **VNCare Phiên Địa Chỉ 2 Cấp** được ghi nhận tại đây theo chuẩn [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.3.5] - 2026-10-31
+
+### Chuẩn Hóa VIẾT HOA Toàn Bộ Cột Họ và Tên (Họ tên, Tên...) ở File Đầu Ra
+- **Chuẩn hóa chữ in hoa (UPPERCASE) toàn bộ cột Họ và Tên:**
+  - Tự động chuẩn hóa toàn bộ tên người bệnh/cán bộ nhân viên sang chữ in hoa (`val.toUpperCase()`) và làm sạch các khoảng trắng thừa giữa các từ.
+  - Áp dụng chuẩn hóa cho mọi cách đặt tiêu đề cột: "Họ và tên", "Họ tên", "Họ và Tên", "Tên", "TENBENHNHAN", "Họ và tên bệnh nhân"...
+  - Đảm bảo 100% tuân thủ quy chuẩn định dạng hồ sơ bệnh án điện tử và cổng tiếp nhận dữ liệu KSK của VNCare / VNPT-HIS.
+- **Đồng bộ ghi đè cột Họ và tên ở cả 2 chế độ xuất file:**
+  - **Chế độ 1 (Điền trực tiếp):** Tự động ghi đè tên đã chuẩn hóa viết hoa vào cột Họ và tên gốc trong file Excel xuất ra.
+  - **Chế độ 2 (Mẫu 7 sheet VNCare):** Ghi tên viết hoa toàn bộ vào Cột 1 (`TENBENHNHAN`) trong sheet `DANHSACH`.
+- **Giao diện đối chiếu Họ và tên trực quan:**
+  - Bảng đối chiếu hiển thị nổi bật tên in hoa đã chuẩn hóa (`NGUYỄN VĂN A`, `XIAO YONG LIANG`...).
+  - Tự động hiển thị chú thích tên gốc trong file nạp nếu có sự khác biệt về kiểu chữ hoa/thường (`Gốc: nguyễn văn a`), giúp nhân viên y tế đối chiếu tức thì mà không cần mở lại file gốc.
+  - Bổ sung thông tin chuẩn hóa viết hoa vào Băng hành động xuất file (Hero Banner).
+
 ## [1.3.4] - 2026-10-29
 
 ### Chuẩn Hóa Quốc Gia (Sheet QUOCGIA 250 Mã), Hỗ Trợ Người Nước Ngoài & Người Việt Nam

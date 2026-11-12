@@ -1,8 +1,8 @@
-# VNCare Phiên Địa Chỉ 2 Cấp (Web & Offline v1.3.5)
+# VNCare Phiên Địa Chỉ 2 Cấp (Web & Offline v1.3.6)
 
-> **Công cụ tự động nhận diện, phân tích và phiên mã địa chỉ hành chính 2 cấp (Tỉnh/TP và Xã/Phường), chuyển đổi địa chỉ 3 cấp cũ sang chuẩn VNCare / VNPT-HIS từ file Excel. Hoạt động 100% Offline bảo mật dữ liệu y tế, chuẩn hóa định dạng Times New Roman 13pt, chuẩn hóa viết hoa toàn bộ Họ và Tên, chuẩn hóa số điện thoại 10 số (Text General @), quản lý 65 dân tộc, phiên chuẩn 250 quốc gia VNCare và tùy biến cột linh hoạt.**
+> **Công cụ tự động nhận diện, phân tích và phiên mã địa chỉ hành chính 2 cấp (Tỉnh/TP và Xã/Phường), chuyển đổi địa chỉ 3 cấp cũ sang chuẩn VNCare / VNPT-HIS từ file Excel. Hoạt động 100% Offline bảo mật dữ liệu y tế, chuẩn hóa định dạng Times New Roman 13pt, chuẩn hóa viết hoa toàn bộ Họ và Tên, chuẩn hóa số điện thoại 10 số (Text General @), quản lý 65 dân tộc, phiên chuẩn 250 quốc gia VNCare, khắc phục triệt để lỗi xung đột tỉnh và tái thiết kế giao diện báo cáo tinh gọn.**
 
-[![Version](https://img.shields.io/badge/version-1.3.5-blue.svg)](https://github.com/Nsnnam/vncare-diachi-web)
+[![Version](https://img.shields.io/badge/version-1.3.6-blue.svg)](https://github.com/Nsnnam/vncare-diachi-web)
 [![Offline First](https://img.shields.io/badge/offline--first-100%25-emerald.svg)](https://nsnnam.github.io/vncare-diachi-web/)
 [![Standard](https://img.shields.io/badge/standard-NSN_App_Standard-indigo.svg)](https://github.com/Nsnnam)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -10,24 +10,47 @@
 
 ---
 
-## Bảng Thông Tin Phát Hành (v1.3.5)
+## Bảng Thông Tin Phát Hành (v1.3.6)
 
 | Thông tin | Chi tiết |
 |---|---|
-| **Phiên bản hiện tại** | `v1.3.5` |
-| **Ngày cập nhật** | 31/10/2026 |
+| **Phiên bản hiện tại** | `v1.3.6` |
+| **Ngày cập nhật** | 12/11/2026 |
 | **Tác giả** | [Nguyễn Sơn Nam (Nsnnam / NamNS)](https://github.com/Nsnnam) |
 | **Múi giờ chuẩn** | GMT+7 (`Asia/Ho_Chi_Minh`) |
 | **Kho mã nguồn** | [https://github.com/Nsnnam/vncare-diachi-web](https://github.com/Nsnnam/vncare-diachi-web) |
 | **Trang trực tuyến (Live)** | [https://nsnnam.github.io/vncare-diachi-web/](https://nsnnam.github.io/vncare-diachi-web/) |
-| **Bản chạy Offline Single-file HTML** | [`releases/vncare-diachi-web-v1.3.5-offline.html`](./releases/vncare-diachi-web-v1.3.5-offline.html) *(Mở trực tiếp trên Chrome, Edge, Cốc Cốc không cần mạng)* |
+| **Bản chạy Offline Single-file HTML** | [`releases/vncare-diachi-web-v1.3.6-offline.html`](./releases/vncare-diachi-web-v1.3.6-offline.html) *(Mở trực tiếp trên Chrome, Edge, Cốc Cốc không cần mạng)* |
 | **Font giao diện** | **Be Vietnam Pro** (Thiết kế tối ưu tiếng Việt) |
 | **Font file Excel xuất ra** | **Times New Roman 13pt**, kẻ ô viền (borders), giãn dòng theo nội dung |
 | **Mật mã mở khóa mặc định** | `namns` (mã băm SHA-256 an toàn) |
 
 ---
 
-## Các Tính Năng Mới & Sửa Đổi Nổi Bật của Phiên Bản v1.3.5
+## Các Tính Năng Mới & Sửa Đổi Nổi Bật của Phiên Bản v1.3.6
+
+### 1. Khắc phục Triệt để Lỗi Phiên Sai Địa Chỉ (Conflict Tỉnh)
+- **Sửa dứt điểm lỗi phiên sai địa chỉ Vĩnh Phúc sang Lai Châu:**
+  - Bổ sung 2 xã còn thiếu của Huyện Tam Dương, Vĩnh Phúc: `Xã Hợp Thịnh` và `Xã Vân Hội` sáp nhập thành `Xã Hội Thịnh, Tỉnh Phú Thọ` (mã địa bàn: `08905-Xã Hội Thịnh`, `25-Tỉnh Phú Thọ`).
+  - Khắc phục lỗi tại các địa chỉ như `Quang Trung - Hợp Thịnh - Tam Dương - Vĩnh Phúc` và `Lê Lợi - Hợp Thịnh - Tam Dương - Vĩnh Phúc` bị match nhầm sang `Thị trấn Tam Đường, Huyện Tam Đường, Tỉnh Lai Châu`.
+- **Cơ chế Chống Xung Đột Tỉnh (Province Conflict Filter):**
+  - Tự động nhận diện tên tỉnh (cả 34 tỉnh mới và 63 tỉnh cũ sáp nhập) xuất hiện trong chuỗi địa chỉ người dùng (ví dụ: `Vĩnh Phúc` ➔ `Phú Thọ`, `Hải Dương` ➔ `Hải Phòng`...).
+  - Tự động loại bỏ hoàn toàn các ứng viên thuộc tỉnh khác nhằm ngăn chặn false positive do trùng tên xã hoặc huyện giữa các tỉnh khác nhau.
+- **Chống Tính Điểm Kép Xã - Huyện (Double-Counting Prevention) & Ưu Tiên Có Dấu:**
+  - Đối với các đơn vị hành chính trùng tên cả xã và huyện (như `Tam Đường` ở Lai Châu), hệ thống chỉ tính điểm 1 cấp nếu từ khóa chỉ xuất hiện 1 lần trong chuỗi địa chỉ đầu vào.
+  - Tăng cường trọng số so khớp có dấu tiếng Việt (Diacritics Boost) để phân biệt chính xác `Tam Dương` (dấu ngã) và `Tam Đường` (dấu huyền, chữ đ).
+
+### 2. Tái Thiết Kế Toàn Diện Bảng Đối Chiếu Dữ Liệu & Báo Cáo Hiển Thị
+- **Tinh gọn bảng từ 13 cột xuống 10 cột:** Loại bỏ tình trạng scroll ngang nặng nề và lặp lại thông tin không cần thiết.
+- **Gom thông tin cá nhân khoa học:** Ngày sinh, CCCD, SĐT được bố trí gọn gàng trong 1 ô thanh lịch ở Input, loại bỏ các cột lặp thừa ở Output.
+- **Tối ưu hiển thị Họ tên & Dân tộc:** Họ tên in hoa sắc nét; dòng phụ hiển thị `1-NAM · Kinh` nhẹ nhàng, tinh tế; loại bỏ hoàn toàn các badge tím thừa thãi cho người Việt Nam. Chỉ hiển thị badge cảnh báo khi có lỗi/thiếu hoặc người nước ngoài.
+- **Chuẩn hóa chiều cao dòng:** Thu gọn chiều cao mỗi dòng về chuẩn compact data grid (~42px), không bị phình to 75-90px.
+- **Hiển thị trọn vẹn địa chỉ 2 cấp:** Cột Địa chỉ 2 cấp không mã và Tỉnh/Xã hiển thị đầy đủ, không bị cắt cụt chữ.
+- **Khắc phục Thanh Floating Action Bar che khuất dòng cuối:** Mở rộng khoảng đệm đáy (`pb-36`) và bổ sung nút thu gọn thông minh, bảo đảm người dùng luôn nhìn thấy và thao tác được trên dòng dữ liệu cuối cùng.
+
+---
+
+## Các Tính Năng & Sửa Đổi của Phiên Bản v1.3.5
 
 ### 1. Chuẩn hóa VIẾT HOA Toàn Bộ Cột Họ và Tên (Họ tên, Tên...) ở File Đầu Ra
 - **Chuẩn hóa chữ in hoa (UPPERCASE) toàn bộ cột Họ và Tên:**

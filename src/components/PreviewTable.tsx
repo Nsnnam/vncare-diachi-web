@@ -7,14 +7,9 @@ import {
   Edit3,
   Check,
   X,
-  ShieldCheck,
   AlertTriangle,
-  ArrowRight,
   ArrowRightLeft,
-  Sparkles,
-  Layers,
   MapPin,
-  CheckCheck,
   CreditCard,
   Phone,
   Globe
@@ -128,6 +123,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
         const inUnusualPhone =
           (q.includes('sdt') || q.includes('dien thoai') || q.includes('điện thoại') || q.includes('la') || q.includes('lạ')) &&
           r.isPhoneUnusual;
+
         if (
           !inAddr &&
           !inName &&
@@ -203,11 +199,11 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
   return (
     <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
       {/* Reconciliation Title & Controls Bar */}
-      <div className="p-4 border-b border-slate-200 bg-slate-50/80 space-y-3">
+      <div className="p-3.5 sm:p-4 border-b border-slate-200 bg-slate-50/90 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h4 className="font-bold text-slate-900 text-sm flex items-center space-x-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
               <span>BẢNG ĐỐI CHIẾU DỮ LIỆU ĐẦU VÀO VÀ ĐẦU RA CHUẨN VNCARE</span>
             </h4>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -244,7 +240,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
         <div className="flex flex-wrap items-center gap-1.5 pt-1">
           <button
             onClick={() => handleSetFilter('all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               activeFilter === 'all'
                 ? 'bg-slate-800 text-white shadow-xs'
                 : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
@@ -255,19 +251,19 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
 
           <button
             onClick={() => handleSetFilter('3_tier')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
               activeFilter === '3_tier'
                 ? 'bg-indigo-600 text-white shadow-xs'
                 : 'bg-white text-indigo-700 hover:bg-indigo-50 border border-indigo-200'
             }`}
           >
             <ArrowRightLeft className="w-3.5 h-3.5" />
-            <span>Chuyển đổi 3 cấp ➔ 2 cấp ({count3Cap})</span>
+            <span>3 cấp ➔ 2 cấp ({count3Cap})</span>
           </button>
 
           <button
             onClick={() => handleSetFilter('2_tier')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
               activeFilter === '2_tier'
                 ? 'bg-emerald-600 text-white shadow-xs'
                 : 'bg-white text-emerald-700 hover:bg-emerald-50 border border-emerald-200'
@@ -279,19 +275,19 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
 
           <button
             onClick={() => handleSetFilter('custom')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
               activeFilter === 'custom'
                 ? 'bg-amber-600 text-white shadow-xs'
                 : 'bg-white text-amber-700 hover:bg-amber-50 border border-amber-200'
             }`}
           >
             <Bookmark className="w-3.5 h-3.5" />
-            <span>Từ Thư viện ({countCustom})</span>
+            <span>Thư viện ({countCustom})</span>
           </button>
 
           <button
             onClick={() => handleSetFilter('unresolved')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
               activeFilter === 'unresolved'
                 ? 'bg-rose-600 text-white shadow-xs'
                 : 'bg-white text-rose-700 hover:bg-rose-50 border border-rose-200'
@@ -304,7 +300,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
           {countMissingCccd > 0 && (
             <button
               onClick={() => handleSetFilter('missing_cccd')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
                 activeFilter === 'missing_cccd'
                   ? 'bg-rose-600 text-white shadow-xs'
                   : 'bg-white text-rose-700 hover:bg-rose-50 border border-rose-200'
@@ -318,35 +314,35 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
           {countMissingEthnicity > 0 && (
             <button
               onClick={() => handleSetFilter('missing_ethnicity')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
                 activeFilter === 'missing_ethnicity'
                   ? 'bg-amber-600 text-white shadow-xs'
                   : 'bg-white text-amber-700 hover:bg-amber-50 border border-amber-200'
               }`}
             >
               <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
-              <span>Thiếu/chưa khớp DT ({countMissingEthnicity})</span>
+              <span>Thiếu DT ({countMissingEthnicity})</span>
             </button>
           )}
 
           {countMissingNation > 0 && (
             <button
               onClick={() => handleSetFilter('missing_nation')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
                 activeFilter === 'missing_nation'
                   ? 'bg-purple-600 text-white shadow-xs'
                   : 'bg-white text-purple-700 hover:bg-purple-50 border border-purple-200'
               }`}
             >
               <Globe className="w-3.5 h-3.5 text-purple-500" />
-              <span>Thiếu/chưa khớp QG ({countMissingNation})</span>
+              <span>Thiếu QG ({countMissingNation})</span>
             </button>
           )}
 
           {countUnusualPhone > 0 && (
             <button
               onClick={() => handleSetFilter('unusual_phone')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
                 activeFilter === 'unusual_phone'
                   ? 'bg-amber-600 text-white shadow-xs'
                   : 'bg-white text-amber-700 hover:bg-amber-50 border border-amber-200'
@@ -360,14 +356,14 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
           {countWarning > 0 && (
             <button
               onClick={() => handleSetFilter('warning')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
                 activeFilter === 'warning'
                   ? 'bg-red-700 text-white shadow-xs'
                   : 'bg-white text-red-700 hover:bg-red-50 border border-red-200'
               }`}
             >
               <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
-              <span>Cảnh báo dữ liệu ({countWarning})</span>
+              <span>Cần bổ sung ({countWarning})</span>
             </button>
           )}
         </div>
@@ -386,8 +382,8 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                 1. Dữ liệu gốc đầu vào (Input)
               </th>
               <th
-                colSpan={9}
-                className="bg-emerald-100/90 text-emerald-900 text-center font-bold py-2 text-[11px] uppercase tracking-wider"
+                colSpan={6}
+                className="bg-emerald-100/90 text-emerald-950 text-center font-bold py-2 text-[11px] uppercase tracking-wider"
               >
                 2. Kết quả đối chiếu & Chuẩn hóa VNCare (Output)
               </th>
@@ -395,39 +391,30 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
             {/* Header Row 2: Columns */}
             <tr className="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200 text-[11px]">
               {/* Input Group */}
-              <th scope="col" className="px-2.5 py-2 text-center w-12 border-r border-slate-200">STT</th>
-              <th scope="col" className="px-3 py-2 text-left w-40 border-r border-slate-200">Họ và tên</th>
-              <th scope="col" className="px-2.5 py-2 text-center w-28 border-r border-slate-200">Ngày sinh / CCCD</th>
-              <th scope="col" className="px-3 py-2 text-left min-w-[200px] border-r-2 border-slate-300">
-                Địa chỉ gốc (Cột N)
+              <th scope="col" className="px-2 py-2 text-center w-12 border-r border-slate-200">STT</th>
+              <th scope="col" className="px-3 py-2 text-left w-48 border-r border-slate-200">Họ và tên</th>
+              <th scope="col" className="px-2.5 py-2 text-center w-36 border-r border-slate-200">Ngày sinh · CCCD · SĐT</th>
+              <th scope="col" className="px-3 py-2 text-left min-w-[220px] border-r-2 border-slate-300">
+                Địa chỉ gốc
               </th>
 
               {/* Output Group */}
-              <th scope="col" className="px-3 py-2 text-left w-40 bg-emerald-50/50 border-r border-slate-200">
-                Tỉnh đã phiên (Cột L)
+              <th scope="col" className="px-3 py-2 text-left w-36 bg-emerald-50/50 border-r border-slate-200">
+                Tỉnh đã phiên
               </th>
               <th scope="col" className="px-3 py-2 text-left w-44 bg-emerald-50/50 border-r border-slate-200">
-                Xã đã phiên (Cột M)
+                Xã đã phiên
               </th>
-              <th scope="col" className="px-3 py-2 text-left w-44 bg-emerald-50/50 border-r border-slate-200" title="Quốc gia chuẩn VNCare (250 quốc gia theo Sheet QUOCGIA)">
-                Quốc gia đã phiên (Cột H)
+              <th scope="col" className="px-2.5 py-2 text-center w-32 bg-emerald-50/50 border-r border-slate-200" title="Quốc gia chuẩn VNCare (250 quốc gia theo Sheet QUOCGIA)">
+                Quốc gia
               </th>
-              <th scope="col" className="px-3 py-2 text-left w-48 bg-emerald-50/50 border-r border-slate-200" title="Địa chỉ 2 cấp không gồm mã số (Xã, Tỉnh)">
+              <th scope="col" className="px-3 py-2 text-left min-w-[210px] bg-emerald-50/50 border-r border-slate-200" title="Địa chỉ 2 cấp không gồm mã số (Xã, Tỉnh)">
                 Địa chỉ 2 cấp (Không mã)
               </th>
-              <th scope="col" className="px-2.5 py-2 text-center w-36 bg-emerald-50/50 border-r border-slate-200">
-                CCCD chuẩn (12 số)
-              </th>
-              <th scope="col" className="px-2.5 py-2 text-center w-24 bg-emerald-50/50 border-r border-slate-200">
-                Ngày sinh (DD/MM/YYYY)
-              </th>
-              <th scope="col" className="px-2.5 py-2 text-center w-28 bg-emerald-50/50 border-r border-slate-200" title="Số điện thoại 10 số (Bảo toàn số 0 ở đầu)">
-                Số ĐT (10 số)
-              </th>
-              <th scope="col" className="px-3 py-2 text-left min-w-[170px] bg-emerald-50/50 border-r border-slate-200">
+              <th scope="col" className="px-3 py-2 text-left w-36 bg-emerald-50/50 border-r border-slate-200">
                 Quy tắc đối chiếu
               </th>
-              <th scope="col" className="px-2.5 py-2 text-center w-20 bg-emerald-50/50">
+              <th scope="col" className="px-2 py-2 text-center w-16 bg-emerald-50/50">
                 Thao tác
               </th>
             </tr>
@@ -436,13 +423,14 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
           <tbody className="divide-y divide-slate-100 bg-white">
             {paginatedRows.length === 0 ? (
               <tr>
-                <td colSpan={13} className="px-4 py-10 text-center text-slate-400 italic">
+                <td colSpan={10} className="px-4 py-10 text-center text-slate-400 italic">
                   Không tìm thấy dòng dữ liệu nào phù hợp với bộ lọc đối chiếu hiện tại.
                 </td>
               </tr>
             ) : (
               paginatedRows.map((row) => {
                 const isEditing = editingRowIndex === row.rowIndex;
+                const isForeign = row.ethnicityFormatted === '99-Nước ngoài' || (row.nationFormatted && !row.nationFormatted.startsWith('0-'));
 
                 return (
                   <tr
@@ -462,52 +450,16 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                     }`}
                   >
                     {/* INPUT 1: STT (Auto-sequenced 1..N) */}
-                    <td className="px-2.5 py-2 text-center font-mono font-bold text-slate-700 bg-slate-50/60 border-r border-slate-200">
+                    <td className="px-2 py-2 text-center font-mono font-bold text-slate-700 bg-slate-50/60 border-r border-slate-200 align-middle">
                       {row.stt}
                     </td>
 
                     {/* INPUT 2: Họ và tên */}
-                    <td className="px-3 py-2 font-medium text-slate-900 border-r border-slate-200">
-                      <div className="flex items-center space-x-1.5 flex-wrap">
-                        <span className="font-bold text-slate-900 tracking-tight" title={row.rawName ? `Họ tên đã viết hoa. Gốc trong file: "${row.rawName}"` : undefined}>
-                          {row.name || <span className="text-amber-600 italic">BỆNH NHÂN {row.stt}</span>}
-                        </span>
-                        {row.rawName && row.rawName.trim().toUpperCase() !== row.rawName.trim() && (
-                          <span className="text-[9px] bg-slate-100 text-slate-500 font-normal px-1 py-0.2 rounded border border-slate-200 shrink-0" title={`Gốc trong file: ${row.rawName}`}>
-                            Gốc: {row.rawName}
-                          </span>
-                        )}
-                        {row.isCccdMissing && (
-                          <span className="text-[9px] bg-rose-100 text-rose-700 font-bold px-1.5 py-0.2 rounded border border-rose-200 shrink-0" title="Chưa có số CCCD">
-                            Thiếu CCCD
-                          </span>
-                        )}
-                        {row.isEthnicityMissing && (
-                          <span className="text-[9px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.2 rounded border border-amber-300 shrink-0" title="Chưa có thông tin Dân tộc trong file nạp">
-                            Thiếu DT
-                          </span>
-                        )}
-                        {row.isEthnicityUnresolved && (
-                          <span className="text-[9px] bg-rose-100 text-rose-800 font-bold px-1.5 py-0.2 rounded border border-rose-300 shrink-0" title={`Dân tộc "${row.rawEthnicity}" không nằm trong danh mục 65 dân tộc VNCare`}>
-                            DT chưa khớp
-                          </span>
-                        )}
-                        {row.isNationMissing && (
-                          <span className="text-[9px] bg-purple-100 text-purple-800 font-bold px-1.5 py-0.2 rounded border border-purple-300 shrink-0" title="Chưa có thông tin Quốc gia cho người nước ngoài">
-                            Thiếu QG
-                          </span>
-                        )}
-                        {row.isNationUnresolved && (
-                          <span className="text-[9px] bg-purple-100 text-purple-800 font-bold px-1.5 py-0.2 rounded border border-purple-300 shrink-0" title={`Quốc gia "${row.rawNation}" không nằm trong danh mục 250 QG VNCare`}>
-                            QG chưa khớp
-                          </span>
-                        )}
-                        {row.isPhoneUnusual && (
-                          <span className="text-[9px] bg-amber-100 text-amber-900 font-bold px-1.5 py-0.2 rounded border border-amber-300 shrink-0" title={`Số điện thoại "${row.phoneFormatted || row.rawPhone}" lạ`}>
-                            SĐT lạ
-                          </span>
-                        )}
+                    <td className="px-3 py-2 border-r border-slate-200 align-middle">
+                      <div className="font-bold text-slate-900 tracking-tight text-xs" title={row.rawName ? `Họ tên đã viết hoa. Gốc trong file: "${row.rawName}"` : undefined}>
+                        {row.name || <span className="text-amber-600 italic">BỆNH NHÂN {row.stt}</span>}
                       </div>
+
                       {isEditing ? (
                         <div className="mt-1 space-y-1">
                           <div className="text-[10px] text-slate-400">{row.genderFormatted}</div>
@@ -527,74 +479,105 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                           </div>
                         </div>
                       ) : (
-                        <div className="text-[10px] text-slate-500 flex items-center space-x-1.5 mt-0.5 flex-wrap gap-y-0.5">
+                        <div className="text-[11px] text-slate-500 flex items-center space-x-1.5 mt-0.5">
                           <span>{row.genderFormatted}</span>
-                          <span>•</span>
+                          <span>·</span>
                           {row.isEthnicityMissing ? (
                             <span
                               onClick={() => startEdit(row)}
-                              className="font-medium text-amber-800 bg-amber-100/90 hover:bg-amber-200 px-1.5 py-0.5 rounded border border-amber-300 flex items-center space-x-1 cursor-pointer transition-colors"
-                              title="File không có dân tộc hoặc bỏ trống — Mặc định khi phiên: 99-Nước ngoài (Nhấp để chọn lại DT)"
+                              className="font-medium text-amber-800 bg-amber-100 hover:bg-amber-200 px-1 py-0.2 rounded border border-amber-300 cursor-pointer transition-colors"
+                              title="File thiếu Dân tộc — Mặc định khi phiên: 99-Nước ngoài (Bấm để sửa)"
                             >
-                              <AlertTriangle className="w-2.5 h-2.5 text-amber-600 shrink-0" />
-                              <span>DT: {row.ethnicityFormatted} (Thiếu — Mặc định 99-Nước ngoài)</span>
-                              <Edit3 className="w-2.5 h-2.5 ml-0.5 text-amber-700 opacity-70" />
+                              DT: Thiếu (99-Nước ngoài)
                             </span>
                           ) : row.isEthnicityUnresolved ? (
                             <span
                               onClick={() => startEdit(row)}
-                              className="font-medium text-rose-800 bg-rose-100/90 hover:bg-rose-200 px-1.5 py-0.5 rounded border border-rose-300 flex items-center space-x-1 cursor-pointer transition-colors"
-                              title={`Dân tộc trong file là "${row.rawEthnicity}", không nằm trong danh mục 65 DT — Mặc định khi phiên: 99-Nước ngoài (Nhấp để chọn lại DT)`}
+                              className="font-medium text-rose-800 bg-rose-100 hover:bg-rose-200 px-1 py-0.2 rounded border border-rose-300 cursor-pointer transition-colors"
+                              title={`Dân tộc "${row.rawEthnicity}" chưa khớp — Mặc định: 99-Nước ngoài (Bấm để sửa)`}
                             >
-                              <AlertTriangle className="w-2.5 h-2.5 text-rose-600 shrink-0" />
-                              <span>DT: {row.ethnicityFormatted} (File: "{row.rawEthnicity}" — Mặc định 99-Nước ngoài)</span>
-                              <Edit3 className="w-2.5 h-2.5 ml-0.5 text-rose-700 opacity-70" />
+                              DT: {row.rawEthnicity}
+                            </span>
+                          ) : isForeign ? (
+                            <span className="font-bold text-purple-900 bg-purple-100 px-1.5 py-0.2 rounded border border-purple-200">
+                              {row.ethnicityFormatted}
                             </span>
                           ) : (
-                            <span
-                              className="font-medium text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200"
-                              title={`Dân tộc chuẩn VNCare: ${row.ethnicityFormatted}${row.rawEthnicity ? ` (Đọc từ file: ${row.rawEthnicity})` : ''}`}
-                            >
-                              DT: {row.ethnicityFormatted}
-                            </span>
-                          )}
-                          {row.rawNation && (
-                            <>
-                              <span>•</span>
-                              <span
-                                className="font-medium text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200"
-                                title={`Quốc gia đọc từ file: ${row.rawNation}`}
-                              >
-                                QG file: {row.rawNation}
-                              </span>
-                            </>
+                            <span className="text-slate-600">{row.ethnicityFormatted.replace(/^\d+\-/, '')}</span>
                           )}
                         </div>
                       )}
                     </td>
 
-                    {/* INPUT 3: Ngày sinh & CCCD gốc */}
-                    <td className="px-2.5 py-2 text-center text-[11px] font-mono border-r border-slate-200 text-slate-600">
-                      <div title="Ngày sinh đọc từ file">{row.rawDob || <span className="text-slate-300 italic">—</span>}</div>
-                      <div className="text-[10px] text-slate-400 truncate max-w-[100px] mx-auto" title="CCCD đọc từ file">
-                        {row.rawCccd || <span className="text-slate-300 italic">—</span>}
-                      </div>
-                      {row.rawPhone && (
-                        <div className="text-[10px] text-slate-500 truncate max-w-[100px] mx-auto" title={`SĐT đọc từ file: ${row.rawPhone}`}>
-                          SĐT: {row.rawPhone}
+                    {/* INPUT 3: Thông tin cá nhân (Ngày sinh · CCCD · SĐT) */}
+                    <td className="px-2.5 py-2 text-center border-r border-slate-200 align-middle">
+                      {isEditing ? (
+                        <div className="space-y-1">
+                          <input
+                            type="text"
+                            value={editCccd}
+                            onChange={(e) => setEditCccd(e.target.value)}
+                            placeholder="Nhập 12 số CCCD..."
+                            className="w-full text-xs font-mono py-0.5 px-1 border border-sky-400 rounded bg-white text-center font-bold"
+                            maxLength={15}
+                          />
+                          <input
+                            type="text"
+                            value={editPhone}
+                            onChange={(e) => setEditPhone(e.target.value)}
+                            placeholder="Số ĐT..."
+                            className="w-full text-xs font-mono py-0.5 px-1 border border-sky-400 rounded bg-white text-center"
+                            maxLength={15}
+                          />
+                        </div>
+                      ) : (
+                        <div className="space-y-0.5">
+                          <div className="font-mono text-xs font-semibold text-slate-800" title="Ngày sinh">
+                            {row.dobFormatted || row.rawDob || <span className="text-slate-300 italic">—</span>}
+                          </div>
+                          <div>
+                            {row.isCccdMissing ? (
+                              <span
+                                onClick={() => startEdit(row)}
+                                className="inline-block text-[10px] font-bold text-rose-700 bg-rose-100 hover:bg-rose-200 px-1.5 py-0.2 rounded border border-rose-300 cursor-pointer"
+                                title="Chưa có CCCD (Bấm để nhập)"
+                              >
+                                Chưa có CCCD
+                              </span>
+                            ) : (
+                              <span className="font-mono text-[11px] text-slate-600" title="Số CCCD">
+                                {row.cccdFormatted || row.rawCccd}
+                              </span>
+                            )}
+                          </div>
+                          {(row.phoneFormatted || row.rawPhone) && (
+                            <div className="text-[10px] font-mono text-slate-500" title="Số điện thoại">
+                              {row.isPhoneUnusual ? (
+                                <span
+                                  onClick={() => startEdit(row)}
+                                  className="text-amber-800 bg-amber-100 px-1 py-0.2 rounded font-bold cursor-pointer"
+                                  title="Số ĐT lạ (Bấm để sửa)"
+                                >
+                                  ĐT: {row.phoneFormatted || row.rawPhone}
+                                </span>
+                              ) : (
+                                <span>ĐT: {row.phoneFormatted || row.rawPhone}</span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
                     </td>
 
                     {/* INPUT 4: Địa chỉ gốc */}
-                    <td className="px-3 py-2 text-slate-700 border-r-2 border-slate-300 max-w-xs">
-                      <div className="text-xs break-words" title={row.rawAddress}>
+                    <td className="px-3 py-2 text-slate-700 border-r-2 border-slate-300 align-middle">
+                      <div className="text-xs break-words max-w-xs" title={row.rawAddress}>
                         {row.rawAddress || <span className="text-slate-300 italic">(Địa chỉ trống)</span>}
                       </div>
                     </td>
 
                     {/* OUTPUT 1: Tỉnh (Cột L) */}
-                    <td className="px-3 py-2 bg-emerald-50/20 border-r border-slate-200">
+                    <td className="px-3 py-2 bg-emerald-50/20 border-r border-slate-200 align-middle">
                       {isEditing ? (
                         <select
                           value={editTinh}
@@ -612,16 +595,16 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                           ))}
                         </select>
                       ) : row.resolvedTinh ? (
-                        <span className="font-semibold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200 block truncate" title={row.resolvedTinh}>
+                        <span className="font-semibold text-sky-900 bg-sky-50 px-2 py-0.5 rounded border border-sky-200 block truncate text-xs" title={row.resolvedTinh}>
                           {row.resolvedTinh}
                         </span>
                       ) : (
-                        <span className="text-rose-500 font-medium italic">Chưa có</span>
+                        <span className="text-rose-500 font-medium italic text-xs">Chưa có</span>
                       )}
                     </td>
 
                     {/* OUTPUT 2: Xã (Cột M) */}
-                    <td className="px-3 py-2 bg-emerald-50/20 border-r border-slate-200">
+                    <td className="px-3 py-2 bg-emerald-50/20 border-r border-slate-200 align-middle">
                       {isEditing ? (
                         <select
                           value={editXa}
@@ -637,16 +620,16 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                           ))}
                         </select>
                       ) : row.resolvedXa ? (
-                        <span className="font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 block truncate" title={row.resolvedXa}>
+                        <span className="font-semibold text-emerald-900 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 block truncate text-xs" title={row.resolvedXa}>
                           {row.resolvedXa}
                         </span>
                       ) : (
-                        <span className="text-rose-500 font-medium italic">Chưa có</span>
+                        <span className="text-rose-500 font-medium italic text-xs">Chưa có</span>
                       )}
                     </td>
 
-                    {/* OUTPUT 2c: Quốc gia đã phiên (Cột H / Sheet QUOCGIA) */}
-                    <td className="px-3 py-2 bg-emerald-50/20 border-r border-slate-200">
+                    {/* OUTPUT 3: Quốc gia (Cột H / Sheet QUOCGIA) */}
+                    <td className="px-2.5 py-2 bg-emerald-50/20 border-r border-slate-200 text-center align-middle">
                       {isEditing ? (
                         <select
                           value={editNation}
@@ -662,216 +645,90 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                       ) : row.isNationMissing ? (
                         <span
                           onClick={() => startEdit(row)}
-                          className="font-medium text-rose-800 bg-rose-100/90 hover:bg-rose-200 px-2 py-0.5 rounded border border-rose-300 flex items-center space-x-1 cursor-pointer transition-colors shadow-2xs"
-                          title="Chưa có thông tin quốc gia cho người nước ngoài — Nhấp để chọn Quốc gia"
+                          className="font-medium text-rose-800 bg-rose-100 hover:bg-rose-200 px-2 py-0.5 rounded border border-rose-300 inline-flex items-center space-x-1 cursor-pointer"
+                          title="Chưa có thông tin quốc gia cho người nước ngoài (Bấm để chọn)"
                         >
-                          <AlertTriangle className="w-3 h-3 text-rose-600 shrink-0" />
+                          <AlertTriangle className="w-3 h-3 text-rose-600" />
                           <span>Thiếu QG</span>
-                          <Edit3 className="w-2.5 h-2.5 ml-auto text-rose-700 opacity-70" />
                         </span>
-                      ) : row.isNationUnresolved ? (
+                      ) : isForeign ? (
                         <span
                           onClick={() => startEdit(row)}
-                          className="font-medium text-amber-900 bg-amber-100/90 hover:bg-amber-200 px-2 py-0.5 rounded border border-amber-300 flex items-center space-x-1 cursor-pointer transition-colors shadow-2xs"
-                          title={`Quốc gia "${row.rawNation}" chưa khớp với danh mục 250 QG VNCare — Mặc định khi phiên: ${row.nationFormatted} (Nhấp để chọn lại)`}
-                        >
-                          <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
-                          <span className="truncate max-w-[130px]">{row.nationFormatted}</span>
-                          <Edit3 className="w-2.5 h-2.5 ml-auto text-amber-700 opacity-70" />
-                        </span>
-                      ) : row.nationFormatted && !row.nationFormatted.startsWith('0-') ? (
-                        <span
-                          onClick={() => startEdit(row)}
-                          className="font-bold text-purple-900 bg-purple-100 hover:bg-purple-200 px-2 py-0.5 rounded border border-purple-300 flex items-center space-x-1 cursor-pointer transition-colors shadow-2xs"
-                          title={`Quốc gia chuẩn VNCare: ${row.nationFormatted} (Bấm để đổi)`}
+                          className="font-bold text-purple-900 bg-purple-100 hover:bg-purple-200 px-2 py-0.5 rounded border border-purple-300 inline-flex items-center space-x-1 cursor-pointer"
+                          title={`Quốc gia: ${row.nationFormatted} (Bấm để đổi)`}
                         >
                           <Globe className="w-3 h-3 text-purple-600 shrink-0" />
-                          <span className="truncate">{row.nationFormatted}</span>
+                          <span className="truncate max-w-[100px]">{row.nationFormatted}</span>
                         </span>
                       ) : (
                         <span
                           onClick={() => startEdit(row)}
-                          className="font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 px-2 py-0.5 rounded border border-slate-200 flex items-center space-x-1 cursor-pointer transition-colors"
-                          title="0-Việt Nam (Bấm để đổi quốc gia nếu là người nước ngoài)"
+                          className="text-slate-600 hover:text-slate-900 cursor-pointer text-xs"
+                          title="0-Việt Nam (Bấm để đổi nếu là người nước ngoài)"
                         >
-                          <span className="truncate">{row.nationFormatted || '0-Việt Nam'}</span>
+                          {row.nationFormatted || '0-Việt Nam'}
                         </span>
                       )}
                     </td>
 
-                    {/* OUTPUT 2b: Địa chỉ 2 cấp (Không mã) */}
-                    <td className="px-3 py-2 bg-emerald-50/20 border-r border-slate-200 max-w-[220px]">
+                    {/* OUTPUT 4: Địa chỉ 2 cấp (Không mã) */}
+                    <td className="px-3 py-2 bg-emerald-50/20 border-r border-slate-200 align-middle">
                       {row.address2Tier ? (
                         <div className="flex items-center space-x-1.5" title={row.address2TierWithDetail || row.address2Tier}>
                           <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                          <div className="min-w-0">
-                            <span className="font-semibold text-emerald-950 bg-emerald-100/80 px-2 py-0.5 rounded border border-emerald-300 block truncate text-xs">
-                              {row.address2TierWithDetail || row.address2Tier}
-                            </span>
-                            {row.address2TierWithDetail && row.address2TierWithDetail !== row.address2Tier && (
-                              <span className="text-[10px] text-emerald-700 block truncate mt-0.5" title={`2 cấp gốc: ${row.address2Tier}`}>
-                                2 cấp: {row.address2Tier}
-                              </span>
-                            )}
-                          </div>
+                          <span className="font-semibold text-emerald-950 bg-emerald-100/90 px-2 py-0.5 rounded border border-emerald-300 text-xs block truncate">
+                            {row.address2TierWithDetail || row.address2Tier}
+                          </span>
                         </div>
                       ) : (
                         <span className="text-slate-400 italic text-[11px]">Chưa xác định</span>
                       )}
                     </td>
 
-                    {/* OUTPUT 3: CCCD chuẩn VNCare (12 số / 8-11 alphanumeric) */}
-                    <td className="px-2.5 py-2 text-center font-mono bg-emerald-50/20 border-r border-slate-200">
-                      {isEditing ? (
-                        <div className="space-y-1">
-                          <input
-                            type="text"
-                            value={editCccd}
-                            onChange={(e) => setEditCccd(e.target.value)}
-                            placeholder="Nhập CCCD..."
-                            className="w-full text-xs font-mono py-1 px-1.5 border border-sky-400 rounded bg-white text-center font-bold"
-                            maxLength={15}
-                            title="Nhập 12 số CCCD hoặc 8-11 ký tự CMND/Hộ chiếu"
-                          />
-                          <span className="text-[9px] text-slate-400 block">
-                            (Bỏ trống nếu chưa có)
-                          </span>
-                        </div>
-                      ) : row.isCccdMissing ? (
-                        <div className="space-y-0.5">
-                          <span
-                            className="inline-flex items-center text-rose-700 bg-rose-100 px-2 py-0.5 rounded text-[11px] font-bold border border-rose-300"
-                            title={`Dòng ${row.stt} (${row.name}) chưa có số CCCD`}
-                          >
-                            <AlertTriangle className="w-3 h-3 mr-1 text-rose-600 shrink-0" />
-                            Chưa có CCCD
-                          </span>
-                          <span className="text-[10px] text-rose-600/90 font-medium block">
-                            (Xuất Excel để trống)
-                          </span>
-                        </div>
-                      ) : row.isCccdValid ? (
-                        <span
-                          className="font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-2xs inline-block"
-                          title={row.cccdFormatted.length === 12 ? 'CCCD 12 chữ số' : 'CMND / Hộ chiếu'}
-                        >
-                          {row.cccdFormatted}
-                        </span>
-                      ) : (
-                        <span
-                          className="inline-flex items-center text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded text-[10px] font-semibold border border-amber-200"
-                          title="Chưa đúng chuẩn 12 số hoặc 8-11 alphanumeric"
-                        >
-                          {row.cccdFormatted || 'Sai định dạng'}
-                        </span>
-                      )}
-                    </td>
-
-                    {/* OUTPUT 4: Ngày sinh chuẩn DD/MM/YYYY */}
-                    <td className="px-2.5 py-2 text-center font-mono bg-emerald-50/20 border-r border-slate-200">
-                      {row.isDobValid ? (
-                        <span className="font-semibold text-slate-800">{row.dobFormatted}</span>
-                      ) : (
-                        <span className="inline-flex items-center text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded text-[10px] font-semibold" title="Chưa đúng chuẩn DD/MM/YYYY">
-                          {row.dobFormatted || 'Thiếu'}
-                        </span>
-                      )}
-                    </td>
-
-                    {/* OUTPUT 4b: Số điện thoại chuẩn VNCare (10 chữ số, text general @) */}
-                    <td className="px-2.5 py-2 text-center font-mono bg-emerald-50/20 border-r border-slate-200">
-                      {isEditing ? (
-                        <div className="space-y-1">
-                          <input
-                            type="text"
-                            value={editPhone}
-                            onChange={(e) => setEditPhone(e.target.value)}
-                            placeholder="09xxxxxxxx"
-                            className="w-full text-xs font-mono py-1 px-1.5 border border-sky-400 rounded bg-white text-center font-bold"
-                            maxLength={15}
-                            title="Nhập số điện thoại 10 số (viết liền, bắt đầu bằng 0)"
-                          />
-                          <span className="text-[9px] text-slate-400 block">
-                            (10 số viết liền)
-                          </span>
-                        </div>
-                      ) : row.isPhoneUnusual ? (
-                        <div className="space-y-0.5">
-                          <span
-                            onClick={() => startEdit(row)}
-                            className="inline-flex items-center text-amber-950 bg-amber-100 hover:bg-amber-200 px-2 py-0.5 rounded text-[10px] font-bold border border-amber-300 cursor-pointer shadow-2xs transition-colors"
-                            title={`Số điện thoại "${row.phoneFormatted || row.rawPhone}" lạ (không đủ 10 số hoặc sai định dạng) — Bấm để sửa thủ công`}
-                          >
-                            <AlertTriangle className="w-3 h-3 mr-1 text-amber-600 shrink-0" />
-                            <span>{row.phoneFormatted || row.rawPhone}</span>
-                            <Edit3 className="w-2.5 h-2.5 ml-1 text-amber-700 opacity-70" />
-                          </span>
-                          <span className="text-[9px] text-rose-600 font-semibold block">
-                            ⚠ SĐT lạ ({row.phoneFormatted ? `${row.phoneFormatted.length} số` : 'sai định dạng'})
-                          </span>
-                        </div>
-                      ) : row.isPhoneValid ? (
-                        <span
-                          className="font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-2xs inline-block"
-                          title="Số điện thoại 10 số chuẩn (Text General @)"
-                        >
-                          {row.phoneFormatted}
-                        </span>
-                      ) : (
-                        <span className="text-slate-300 italic text-[11px]">—</span>
-                      )}
-                    </td>
-
                     {/* OUTPUT 5: Quy tắc đối chiếu & Trạng thái */}
-                    <td className="px-3 py-2 bg-emerald-50/20 border-r border-slate-200">
-                      <div className="space-y-1">
+                    <td className="px-3 py-2 bg-emerald-50/20 border-r border-slate-200 align-middle">
+                      <div>
                         {row.resolutionType === '3_tier_conversion' && (
-                          <span className="inline-flex items-center text-[10px] text-indigo-800 bg-indigo-100 px-2 py-0.5 rounded-full font-bold shadow-2xs" title={row.method}>
-                            <ArrowRightLeft className="w-3 h-3 mr-1 text-indigo-600" />
-                            3 cấp ➔ 2 cấp mới
+                          <span className="inline-flex items-center text-[10px] text-indigo-800 bg-indigo-100 px-2 py-0.5 rounded-full font-bold" title={row.method}>
+                            <ArrowRightLeft className="w-3 h-3 mr-1 text-indigo-600 shrink-0" />
+                            <span>3 cấp ➔ 2 cấp</span>
                           </span>
                         )}
 
                         {row.resolutionType === '2_tier_exact' && (
-                          <span className="inline-flex items-center text-[10px] text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full font-bold shadow-2xs" title={row.method}>
-                            <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-600" />
-                            Khớp 2 cấp chuẩn
+                          <span className="inline-flex items-center text-[10px] text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full font-bold" title={row.method}>
+                            <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-600 shrink-0" />
+                            <span>Khớp 2 cấp chuẩn</span>
                           </span>
                         )}
 
                         {row.status === 'custom' && (
-                          <span className="inline-flex items-center text-[10px] text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full font-bold shadow-2xs" title={row.method}>
-                            <Bookmark className="w-3 h-3 mr-1 text-amber-600" />
-                            Thư viện thủ công
+                          <span className="inline-flex items-center text-[10px] text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full font-bold" title={row.method}>
+                            <Bookmark className="w-3 h-3 mr-1 text-amber-600 shrink-0" />
+                            <span>Thư viện thủ công</span>
                           </span>
                         )}
 
                         {row.status === 'unresolved' && (
-                          <span className="inline-flex items-center text-[10px] text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full font-bold shadow-2xs" title="Chưa thể nhận diện">
-                            <AlertCircle className="w-3 h-3 mr-1 text-rose-600" />
-                            Chưa khớp
+                          <span className="inline-flex items-center text-[10px] text-rose-700 bg-rose-100 px-2 py-0.5 rounded-full font-bold" title="Chưa thể nhận diện">
+                            <AlertCircle className="w-3 h-3 mr-1 text-rose-600 shrink-0" />
+                            <span>Chưa khớp</span>
                           </span>
                         )}
 
                         {row.status === 'empty' && (
                           <span className="text-[10px] text-slate-400 italic">Địa chỉ trống</span>
                         )}
-
-                        {row.isMissingMandatory && row.missingFields.length > 0 && (
-                          <div className="text-[10px] text-rose-600 font-medium truncate" title={`Thiếu trường: ${row.missingFields.join(', ')}`}>
-                            ⚠ Cần bổ sung: {row.missingFields.slice(0, 2).join(', ')}{row.missingFields.length > 2 ? '...' : ''}
-                          </div>
-                        )}
                       </div>
                     </td>
 
                     {/* OUTPUT 6: Thao tác sửa nhanh */}
-                    <td className="px-2.5 py-2 text-center bg-emerald-50/20">
+                    <td className="px-2 py-2 text-center bg-emerald-50/20 align-middle">
                       {isEditing ? (
                         <div className="flex items-center justify-center space-x-1">
                           <button
                             onClick={() => saveEdit(row)}
-                            className="p-1 text-emerald-600 hover:bg-emerald-50 rounded"
+                            className="p-1 text-emerald-600 hover:bg-emerald-100 rounded"
                             title="Lưu sửa đổi"
                           >
                             <Check className="w-3.5 h-3.5" />
@@ -887,41 +744,11 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                       ) : (
                         <button
                           onClick={() => startEdit(row)}
-                          className={`px-2 py-1 rounded text-[11px] font-medium flex items-center space-x-0.5 mx-auto transition-colors ${
-                            row.isCccdMissing
-                              ? 'text-rose-700 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 font-semibold shadow-2xs'
-                              : row.isEthnicityMissing || row.isEthnicityUnresolved
-                              ? 'text-amber-800 hover:text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-300 font-semibold shadow-2xs'
-                              : row.isNationMissing || row.isNationUnresolved
-                              ? 'text-purple-800 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-300 font-semibold shadow-2xs'
-                              : row.isPhoneUnusual
-                              ? 'text-amber-900 hover:text-amber-950 bg-amber-50 hover:bg-amber-100 border border-amber-400 font-semibold shadow-2xs'
-                              : 'text-slate-500 hover:text-sky-600 hover:bg-sky-50'
-                          }`}
-                          title={
-                            row.isCccdMissing
-                              ? `Bấm để nhập CCCD cho dòng ${row.stt} (${row.name})`
-                              : row.isEthnicityMissing || row.isEthnicityUnresolved
-                              ? `Bấm để chọn lại Dân tộc cho dòng ${row.stt} (${row.name})`
-                              : row.isNationMissing || row.isNationUnresolved
-                              ? `Bấm để chọn lại Quốc gia cho dòng ${row.stt} (${row.name})`
-                              : row.isPhoneUnusual
-                              ? `Bấm để sửa Số điện thoại cho dòng ${row.stt} (${row.name})`
-                              : 'Sửa Tỉnh/Xã/Quốc gia/CCCD/Dân tộc/SĐT'
-                          }
+                          className="px-2 py-1 rounded text-[11px] font-semibold text-slate-600 hover:text-sky-700 hover:bg-sky-50 border border-slate-200 transition-colors inline-flex items-center space-x-0.5"
+                          title="Sửa thông tin dòng này"
                         >
                           <Edit3 className="w-3 h-3" />
-                          <span>
-                            {row.isCccdMissing
-                              ? 'Nhập CCCD'
-                              : row.isEthnicityMissing || row.isEthnicityUnresolved
-                              ? 'Sửa DT'
-                              : row.isNationMissing || row.isNationUnresolved
-                              ? 'Sửa QG'
-                              : row.isPhoneUnusual
-                              ? 'Sửa SĐT'
-                              : 'Sửa'}
-                          </span>
+                          <span>Sửa</span>
                         </button>
                       )}
                     </td>
@@ -934,7 +761,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
       </div>
 
       {/* Pagination Footer */}
-      <div className="p-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2 bg-slate-50/50">
+      <div className="p-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2 bg-slate-50/60">
         <div>
           Đang xem <strong>{filteredRows.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}</strong> -{' '}
           <strong>{Math.min(currentPage * pageSize, filteredRows.length)}</strong> trên tổng số{' '}

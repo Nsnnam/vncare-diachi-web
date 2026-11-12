@@ -185,6 +185,29 @@ const OLD_MAPPINGS_INDEX: IndexedOldMapping[] = [];
   }
 })();
 
+// Build Old Province -> New Province mapping dictionary
+const OLD_PROVINCE_TO_NEW_PROV_MAP: Map<string, string> = new Map();
+(function initProvinceMappings() {
+  const list = (addressMappingData as any) || [];
+  for (const a of list) {
+    const tinhC = String(a.tinh_cu || '').trim();
+    const tinhM = String(a.tinh_moi || '').trim();
+    if (tinhC && tinhM) {
+      const cCore = stripAdminPrefix(normalizeText(tinhC));
+      const mCore = stripAdminPrefix(normalizeText(tinhM));
+      if (cCore && mCore) {
+        OLD_PROVINCE_TO_NEW_PROV_MAP.set(cCore, mCore);
+      }
+    }
+  }
+  // Common colloquial / shortened province names
+  OLD_PROVINCE_TO_NEW_PROV_MAP.set('vinh phuc', 'phu tho');
+  OLD_PROVINCE_TO_NEW_PROV_MAP.set('hoa binh', 'phu tho');
+  OLD_PROVINCE_TO_NEW_PROV_MAP.set('ha tay', 'ha noi');
+  OLD_PROVINCE_TO_NEW_PROV_MAP.set('sai gon', 'ho chi minh');
+  OLD_PROVINCE_TO_NEW_PROV_MAP.set('tphcm', 'ho chi minh');
+})();
+
 /** Word boundary regex check */
 function matchWord(pattern: string, text: string): boolean {
   if (!pattern || !text) return false;
@@ -192,6 +215,11 @@ function matchWord(pattern: string, text: string): boolean {
   const escaped = pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const regex = new RegExp(`(^|\\s)${escaped}(\\s|$)`, 'i');
   return regex.test(text);
+}
+
+/** Check if original text has Vietnamese diacritics */
+function hasDiacritics(str: string): boolean {
+  return /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđĐ]/.test(str);
 }
 
 /** Find start and end position of pattern in text with word boundary */
@@ -229,6 +257,8 @@ export function resolveAddress(
 
   const rawTrimmed = rawAddress.trim();
   const norm = normalizeText(rawTrimmed);
+  const rawLower = rawTrimmed.toLowerCase();
+  const inputHasMarks = hasDiacritics(rawTrimmed);
 
   // 0. Check Custom Dictionary Rules
   if (customRules && customRules.length > 0) {
@@ -278,6 +308,26 @@ export function resolveAddress(
         };
       }
     }
+  }
+
+  // Detect explicit province mentioned in input (new or old province)
+  // E.g. "Vĩnh Phúc" -> expected new province: "phu tho"
+  // E.g. "Lai Châu" -> expected new province: "lai chau"
+  // E.g. "Phú Phong - Hồng Phương - Yên Lạc - Phúc" -> expected: "phu tho"
+  const detectedTargetProvinces: Set<string> = new Set();
+  for (const [oldP, newP] of OLD_PROVINCE_TO_NEW_PROV_MAP.entries()) {
+    if (matchWord(oldP, norm)) {
+      detectedTargetProvinces.add(newP);
+    }
+  }
+  for (const prov of PROVINCES_LIST) {
+    if (matchWord(prov.normName, norm) || matchWord(prov.coreName, norm)) {
+      detectedTargetProvinces.add(prov.coreName);
+    }
+  }
+  // Check special suffix "Phúc" or "Vĩnh Phúc" at the end of address string
+  if (norm.endsWith(' phuc') || norm.includes(' yen lac phuc') || norm.includes(' vinh phuc')) {
+    detectedTargetProvinces.add('phu tho');
   }
 
   // 1. Detect Province in raw text
@@ -366,8 +416,8 @@ export function resolveAddress(
     }
   }
 
-  // 3. Check Old 3-Level Address Database (10,035 records)
-  // E.g. "Phường Đồng Tâm, Thành phố Yên Bái, Tỉnh Yên Bái" -> "Phường Yên Bái, Tỉnh Lào Cai"
+  // 3. Check Old 3-Level Address Database (10,037 records)
+  // E.g. "Hợp Thịnh, Tam Dương, Vĩnh Phúc" -> "Xã Hội Thịnh, Tỉnh Phú Thọ"
   // E.g. "Gia Cẩm, Việt Trì, Phú Thọ" -> "Phường Việt Trì, Tỉnh Phú Thọ"
   interface OldCandidate {
     score: number;
@@ -379,21 +429,64 @@ export function resolveAddress(
     if (old.xaCuCore.length < 3) continue;
 
     if (matchWord(old.xaCuCore, norm)) {
+      // PROVINCE CONFLICT CHECK:
+      // If user input clearly mentions a specific target province (e.g. "Vĩnh Phúc" -> "phu tho"),
+      // but this candidate belongs to a completely different province (e.g. "lai chau", "nghe an"),
+      // immediately skip or disqualify to prevent false positive matching!
+      if (detectedTargetProvinces.size > 0 && !detectedTargetProvinces.has(old.tinhMoiCore)) {
+        continue;
+      }
+
       let score = 15;
 
-      // Exact prefix match (e.g. "phuong gia cam")
+      // Exact prefix match in norm (e.g. "xa hop thinh", "phuong gia cam")
       if (matchWord(old.xaCuNorm, norm)) {
         score += 20;
       }
-      // Old district match (e.g. "viet tri", "nam sach", "thanh pho yen bai")
-      if (old.huyenCuCore && matchWord(old.huyenCuCore, norm)) {
-        score += 35;
+
+      // Diacritics matching check if user input has tone marks:
+      if (inputHasMarks) {
+        const cleanOldXa = stripAdminPrefix(old.xaCu.toLowerCase());
+        if (cleanOldXa && rawLower.includes(cleanOldXa)) {
+          score += 25; // Boost exact diacritic match
+        }
       }
-      // Old province match (e.g. "hai duong", "yen bai", "ha tay")
+
+      // Old district match with double-counting prevention:
+      // If commune and district have identical names (e.g. "Tam Đường - Tam Đường"),
+      // only count district score if the word appears at least twice or with explicit district prefix!
+      if (old.huyenCuCore && matchWord(old.huyenCuCore, norm)) {
+        if (old.xaCuCore === old.huyenCuCore) {
+          const occRegex = new RegExp(`(^|\\s)${old.huyenCuCore}(\\s|$)`, 'gi');
+          const occurrences = (norm.match(occRegex) || []).length;
+          const hasExplicitHuyen =
+            matchWord(`huyen ${old.huyenCuCore}`, norm) ||
+            matchWord(`quan ${old.huyenCuCore}`, norm) ||
+            matchWord(`tp ${old.huyenCuCore}`, norm) ||
+            matchWord(`thanh pho ${old.huyenCuCore}`, norm);
+
+          if (occurrences >= 2 || hasExplicitHuyen) {
+            score += 35;
+          }
+        } else {
+          score += 35;
+          if (inputHasMarks) {
+            const cleanOldHuyen = stripAdminPrefix(old.huyenCu.toLowerCase());
+            if (cleanOldHuyen && rawLower.includes(cleanOldHuyen)) {
+              score += 15; // Boost exact diacritic district match
+            }
+          }
+        }
+      }
+
+      // Old province match (e.g. "vinh phuc", "hai duong", "yen bai", "ha tay")
       if (old.tinhCuCore && matchWord(old.tinhCuCore, norm)) {
         score += 40;
+      } else if (old.tinhCuCore === 'vinh phuc' && (norm.endsWith(' phuc') || norm.includes(' phuc'))) {
+        score += 35; // Support shortened suffix "Phúc"
       }
-      // New province match (e.g. "hai phong", "lao cai")
+
+      // New province match (e.g. "phu tho", "hai phong", "lao cai")
       if (old.tinhMoiCore && matchWord(old.tinhMoiCore, norm)) {
         score += 30;
       }

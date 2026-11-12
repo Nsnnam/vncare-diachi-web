@@ -2,6 +2,28 @@
 
 Toàn bộ các thay đổi của dự án **VNCare Phiên Địa Chỉ 2 Cấp** được ghi nhận tại đây theo chuẩn [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.3.6] - 2026-11-12
+
+### Khắc phục Triệt để Lỗi Phiên Sai Địa Chỉ (Conflict Tỉnh) & Tái Thiết Kế Toàn Diện UI Báo Cáo
+- **Sửa dứt điểm lỗi phiên sai địa chỉ Vĩnh Phúc sang Lai Châu (STT 14, 18):**
+  - Bổ sung 2 xã còn thiếu của Huyện Tam Dương, Vĩnh Phúc: `Xã Hợp Thịnh` và `Xã Vân Hội` sáp nhập thành `Xã Hội Thịnh, Tỉnh Phú Thọ` (mã địa bàn: `08905-Xã Hội Thịnh`, `25-Tỉnh Phú Thọ`).
+  - Khắc phục lỗi tại các địa chỉ như `Quang Trung - Hợp Thịnh - Tam Dương - Vĩnh Phúc` và `Lê Lợi - Hợp Thịnh - Tam Dương - Vĩnh Phúc` bị match nhầm sang `Thị trấn Tam Đường, Huyện Tam Đường, Tỉnh Lai Châu`.
+- **Cơ chế Chống Xung Đột Tỉnh (Province Conflict Filter):**
+  - Tự động nhận diện tên tỉnh (cả 34 tỉnh mới và 63 tỉnh cũ sáp nhập) xuất hiện trong chuỗi địa chỉ người dùng (ví dụ: `Vĩnh Phúc` ➔ `Phú Thọ`, `Hải Dương` ➔ `Hải Phòng`...).
+  - Tự động loại bỏ hoàn toàn các ứng viên thuộc tỉnh khác nhằm ngăn chặn false positive do trùng tên xã hoặc huyện giữa các tỉnh khác nhau.
+- **Chống Tính Điểm Kép Xã - Huyện (Double-Counting Prevention) & Ưu Tiên Có Dấu:**
+  - Đối với các đơn vị hành chính trùng tên cả xã và huyện (như `Tam Đường` ở Lai Châu), hệ thống chỉ tính điểm 1 cấp nếu từ khóa chỉ xuất hiện 1 lần trong chuỗi địa chỉ đầu vào.
+  - Tăng cường trọng số so khớp có dấu tiếng Việt (Diacritics Boost) để phân biệt chính xác `Tam Dương` (dấu ngã) và `Tam Đường` (dấu huyền, chữ đ).
+- **Tái thiết kế toàn diện Bảng Đối Chiếu Dữ Liệu (PreviewTable):**
+  - Tinh gọn số cột từ 13 cột xuống 10 cột, loại bỏ tình trạng scroll ngang nặng nề và lặp lại thông tin.
+  - Gom thông tin Ngày sinh, CCCD, SĐT vào 1 ô duy nhất ở Input, xóa bỏ các cột lặp lại dư thừa ở phần Output.
+  - Cột Họ và tên: Tên in hoa đậm nét, dòng phụ dưới tinh gọn `1-NAM · Kinh`, loại bỏ các badge tím thừa thãi cho người Việt Nam. Chỉ hiển thị badge cảnh báo khi có lỗi/thiếu hoặc người nước ngoài.
+  - Chiều cao dòng thu gọn về chuẩn compact data table (~42px), không còn bị phình to 75-90px.
+  - Các cột Tỉnh, Xã, Địa chỉ 2 cấp hiển thị trọn vẹn, không bị cắt cụt chữ.
+- **Khắc phục Thanh Floating Action Bar che khuất dòng cuối:**
+  - Mở rộng khoảng đệm đáy (`pb-36`) cho trang để toàn bộ dòng cuối cùng luôn hiển thị rõ ràng bên trên thanh tải file.
+  - Bổ sung nút thu gọn thông minh cho thanh tải file nổi, chuyển thành nút tròn nhỏ gọn gàng khi người dùng muốn xem toàn màn hình.
+
 ## [1.3.5] - 2026-10-31
 
 ### Chuẩn Hóa VIẾT HOA Toàn Bộ Cột Họ và Tên (Họ tên, Tên...) ở File Đầu Ra

@@ -80,6 +80,9 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
   // Table filter link
   const [tableFilter, setTableFilter] = useState<string>('all');
 
+  // Floating bottom bar visibility
+  const [showFloatingBar, setShowFloatingBar] = useState<boolean>(true);
+
   // Drawer
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
 
@@ -367,7 +370,7 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
   const isDotKhamValid = /^\d{4}(0[1-9]|1[0-2])$/.test(dotKham.trim());
 
   return (
-    <div className="space-y-5 pb-16">
+    <div className="space-y-5 pb-36">
       {/* Upload Dropzone (When no file is loaded yet) */}
       {!wbData && (
         <div className="bg-white border-2 border-dashed border-sky-300 hover:border-sky-500 rounded-2xl p-8 sm:p-12 text-center transition-all bg-sky-50/20">
@@ -1629,28 +1632,50 @@ export const ExcelProcessorTab: React.FC<ExcelProcessorTabProps> = ({ onCustomDi
           {/* ========================================================================= */}
           {/* 4. FLOATING BOTTOM EXPORT BAR (Always visible when scrolling) */}
           {/* ========================================================================= */}
-          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700/80 backdrop-blur-md flex items-center space-x-4 max-w-xl w-[92vw] sm:w-auto justify-between animate-in fade-in slide-in-from-bottom-3 duration-300">
-            <div className="flex items-center space-x-3 text-xs">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-              <div>
-                <span className="font-bold text-emerald-400">
-                  {successCount}/{totalRows} dòng ({successRate}%)
-                </span>
-                <span className="text-slate-300 hidden sm:inline ml-1.5">
-                  · Đợt: {dotKham} · Times New Roman 13pt {includeAddress2Tier && '· Kèm Địa chỉ 2 cấp'}
-                </span>
+          {showFloatingBar ? (
+            <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 text-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-700/80 backdrop-blur-md flex items-center space-x-4 max-w-xl w-[92vw] sm:w-auto justify-between animate-in fade-in slide-in-from-bottom-3 duration-300">
+              <div className="flex items-center space-x-3 text-xs">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                <div>
+                  <span className="font-bold text-emerald-400">
+                    {successCount}/{totalRows} dòng ({successRate}%)
+                  </span>
+                  <span className="text-slate-300 hidden sm:inline ml-1.5">
+                    · Đợt: {dotKham} · Times New Roman 13pt {includeAddress2Tier && '· Kèm Địa chỉ 2 cấp'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2 shrink-0">
+                <button
+                  onClick={handleExport}
+                  disabled={isExporting}
+                  className="px-5 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center space-x-1.5 cursor-pointer"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>TẢI FILE EXCEL (.XLSX)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowFloatingBar(false)}
+                  className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
+                  title="Thu gọn thanh tải file"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </button>
               </div>
             </div>
-
+          ) : (
             <button
-              onClick={handleExport}
-              disabled={isExporting}
-              className="px-5 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-xs font-bold rounded-xl shadow-md transition-all flex items-center space-x-1.5 cursor-pointer shrink-0"
+              type="button"
+              onClick={() => setShowFloatingBar(true)}
+              className="fixed bottom-5 right-5 z-40 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xl flex items-center space-x-2 text-xs font-bold transition-all animate-in fade-in cursor-pointer border border-emerald-400"
+              title="Mở lại thanh tải file"
             >
               <Download className="w-4 h-4" />
-              <span>TẢI FILE EXCEL (.XLSX)</span>
+              <span>Tải Excel ({successRate}%)</span>
             </button>
-          </div>
+          )}
         </div>
       )}
 

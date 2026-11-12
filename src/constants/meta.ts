@@ -1,8 +1,8 @@
 export const APP_META = {
   name: "VNCare Phiên Địa Chỉ 2 Cấp",
   appCode: "DIACHI",
-  version: "1.3.5",
-  releaseDate: "2026-10-31",
+  version: "1.3.6",
+  releaseDate: "2026-11-12",
   author: "Nguyễn Sơn Nam (Nsnnam / NamNS)",
   githubUrl: "https://github.com/Nsnnam/vncare-diachi-web",
   homeRepo: "Nsnnam/vncare-diachi-web",
@@ -19,6 +19,17 @@ export const APP_META = {
     qrPath: "coffee-qr.jpg",
   },
   changelog: [
+    {
+      version: "1.3.6",
+      date: "2026-11-12",
+      highlights: [
+        "Khắc phục triệt để lỗi phiên sai địa chỉ (False Positive Conflict): Bổ sung 2 xã Hợp Thịnh và Vân Hội (Huyện Tam Dương, Vĩnh Phúc) sáp nhập về Xã Hội Thịnh, Tỉnh Phú Thọ (mã 08905, tỉnh 25). Giải quyết dứt điểm trường hợp địa chỉ Vĩnh Phúc bị nhảy nhầm sang Tỉnh Lai Châu.",
+        "Cơ chế Chống Xung Đột Tỉnh (Province Conflict Filter): Phát hiện tỉnh được đề cập trong địa chỉ và tự động loại bỏ toàn bộ các ứng viên thuộc tỉnh khác nhằm chống match nhầm do trùng tên xã/huyện.",
+        "Chống tính điểm trùng lặp Xã - Huyện (Double-Counting Prevention): Ngăn chặn việc một từ khóa địa danh duy nhất (như 'Tam Dương' hay 'Tam Đường') bị cộng điểm 2 lần cho cả xã và huyện; tăng cường ưu tiên so khớp có dấu tiếng Việt chính xác.",
+        "Thiết kế lại toàn diện Bảng Đối Chiếu & Báo Cáo Hiển Thị: Tinh gọn từ 13 cột xuống 10 cột khoa học, gom thông tin cá nhân (Ngày sinh · CCCD · SĐT) thành 1 ô thanh lịch, loại bỏ các badge thừa thãi gây phình dòng.",
+        "Khắc phục Thanh Floating Action Bar: Mở rộng khoảng đệm đáy (pb-36) và bổ sung nút thu gọn thông minh, đảm bảo thanh tải file không bao giờ che khuất dòng dữ liệu cuối cùng của bảng."
+      ]
+    },
     {
       version: "1.3.5",
       date: "2026-10-31",

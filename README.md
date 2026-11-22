@@ -1,8 +1,8 @@
-# VNCare Phiên Địa Chỉ 2 Cấp (Web & Offline v1.3.6)
+# VNCare Phiên Địa Chỉ 2 Cấp (Web & Offline v1.3.7)
 
-> **Công cụ tự động nhận diện, phân tích và phiên mã địa chỉ hành chính 2 cấp (Tỉnh/TP và Xã/Phường), chuyển đổi địa chỉ 3 cấp cũ sang chuẩn VNCare / VNPT-HIS từ file Excel. Hoạt động 100% Offline bảo mật dữ liệu y tế, chuẩn hóa định dạng Times New Roman 13pt, chuẩn hóa viết hoa toàn bộ Họ và Tên, chuẩn hóa số điện thoại 10 số (Text General @), quản lý 65 dân tộc, phiên chuẩn 250 quốc gia VNCare, khắc phục triệt để lỗi xung đột tỉnh và tái thiết kế giao diện báo cáo tinh gọn.**
+> **Công cụ tự động nhận diện, phân tích và phiên mã địa chỉ hành chính 2 cấp (Tỉnh/TP và Xã/Phường), chuyển đổi địa chỉ 3 cấp cũ sang chuẩn VNCare / VNPT-HIS từ file Excel. Hoạt động 100% Offline bảo mật dữ liệu y tế, chuẩn hóa định dạng Times New Roman 13pt, chuẩn hóa viết hoa toàn bộ Họ và Tên, chuẩn hóa số điện thoại 10 số (Text General @), quản lý 65 dân tộc, phiên chuẩn 250 quốc gia VNCare, khắc phục triệt để lỗi xung đột tỉnh, xử lý triệt để lỗi xuất file bảng tính triệu dòng và thanh điều hướng phân trang song hành.**
 
-[![Version](https://img.shields.io/badge/version-1.3.6-blue.svg)](https://github.com/Nsnnam/vncare-diachi-web)
+[![Version](https://img.shields.io/badge/version-1.3.7-blue.svg)](https://github.com/Nsnnam/vncare-diachi-web)
 [![Offline First](https://img.shields.io/badge/offline--first-100%25-emerald.svg)](https://nsnnam.github.io/vncare-diachi-web/)
 [![Standard](https://img.shields.io/badge/standard-NSN_App_Standard-indigo.svg)](https://github.com/Nsnnam)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -10,24 +10,45 @@
 
 ---
 
-## Bảng Thông Tin Phát Hành (v1.3.6)
+## Bảng Thông Tin Phát Hành (v1.3.7)
 
 | Thông tin | Chi tiết |
 |---|---|
-| **Phiên bản hiện tại** | `v1.3.6` |
-| **Ngày cập nhật** | 12/11/2026 |
+| **Phiên bản hiện tại** | `v1.3.7` |
+| **Ngày cập nhật** | 22/11/2026 |
 | **Tác giả** | [Nguyễn Sơn Nam (Nsnnam / NamNS)](https://github.com/Nsnnam) |
 | **Múi giờ chuẩn** | GMT+7 (`Asia/Ho_Chi_Minh`) |
 | **Kho mã nguồn** | [https://github.com/Nsnnam/vncare-diachi-web](https://github.com/Nsnnam/vncare-diachi-web) |
 | **Trang trực tuyến (Live)** | [https://nsnnam.github.io/vncare-diachi-web/](https://nsnnam.github.io/vncare-diachi-web/) |
-| **Bản chạy Offline Single-file HTML** | [`releases/vncare-diachi-web-v1.3.6-offline.html`](./releases/vncare-diachi-web-v1.3.6-offline.html) *(Mở trực tiếp trên Chrome, Edge, Cốc Cốc không cần mạng)* |
+| **Bản chạy Offline Single-file HTML** | [`releases/vncare-diachi-web-v1.3.7-offline.html`](./releases/vncare-diachi-web-v1.3.7-offline.html) *(Mở trực tiếp trên Chrome, Edge, Cốc Cốc không cần mạng)* |
 | **Font giao diện** | **Be Vietnam Pro** (Thiết kế tối ưu tiếng Việt) |
 | **Font file Excel xuất ra** | **Times New Roman 13pt**, kẻ ô viền (borders), giãn dòng theo nội dung |
 | **Mật mã mở khóa mặc định** | `namns` (mã băm SHA-256 an toàn) |
 
 ---
 
-## Các Tính Năng Mới & Sửa Đổi Nổi Bật của Phiên Bản v1.3.6
+## Các Tính Năng Mới & Sửa Đổi Nổi Bật của Phiên Bản v1.3.7
+
+### 1. Khắc phục Triệt để Lỗi Xuất File Excel "Too many properties to enumerate"
+- **Nguyên nhân cốt lõi:** Một số file Excel thực tế chỉ có vài trăm dòng nhưng vùng ô tham chiếu (`!ref`) bị kéo dãn bất thường tới hơn 1.048.566 dòng (ví dụ file `Ds NHÂN VIÊN Sân Gôn Ngôi Sao Yên Bái.xlsx`, sheet `BÌA Sân gôn Yên Bái `). Khi SheetJS parse cấu trúc XML styles của hơn 13 triệu cell ảo, bộ nhớ V8 JavaScript engine bị quá tải và ném lỗi `RangeError: Too many properties to enumerate`.
+- **Giải pháp xử lý thông minh & triệt để:**
+  - **Cơ chế Tự Động Làm Sạch Worksheet (`sanitizeWorksheet`):** Quét vùng dữ liệu thực có nội dung/công thức của worksheet và cập nhật lại `!ref` về đúng kích thước thực tế (từ `A1:M1048566` thu gọn về `A1:M321`).
+  - **Tối ưu hóa bộ nhớ khi xuất file (`exportInplaceFile`):** Loại bỏ việc đọc lại styles không cần thiết của hàng triệu ô ảo từ buffer, chuyển sang quy trình định dạng Times New Roman 13pt và viền ô tự động hoàn toàn theo số dòng thực tế.
+  - **Hỗ trợ tên sheet có khoảng trắng thừa:** Tự động cắt tỉa ký tự space ở cuối tên sheet (`k.trim()`) khi nạp và chuyển đổi sheet dữ liệu.
+
+### 2. Hệ Thống Phân Trang & Điều Khiển Hiển Thị Báo Cáo Song Hành (Dual Pagination Controls)
+- **Hiển thị song hành ở cả Đầu Báo Cáo và Cuối Báo Cáo:**
+  - Cung cấp đầy đủ thông tin: *"Đang xem X - Y trên tổng số Z dòng (tổng nạp: N dòng)"*.
+  - Cụm nút điều hướng nhanh: `[Đầu]`, `[Trước]`, `[Trang X / Y]`, `[Sau]`, `[Cuối]`.
+  - Hai thanh phân trang ở đầu bảng và cuối bảng được liên kết và đồng bộ trạng thái tức thì 100%.
+- **Tùy chỉnh số lượng hồ sơ hiển thị linh hoạt:**
+  - **Thay đổi mặc định:** Đổi số dòng hiển thị mặc định mỗi trang từ 25 xuống **10 dòng/trang** giúp giao diện gọn gàng, tải siêu tốc.
+  - **Menu chọn nhanh:** Lựa chọn giữa các mốc tiện lợi `10`, `20`, `25`, `50`, `100 dòng/trang`.
+  - **Ô tự điền số lượng hồ sơ:** Hỗ trợ ô input nhập số trực tiếp để người dùng tự do cấu hình số lượng dòng trên một trang theo ý muốn (hỗ trợ từ `1` đến tối đa `100 dòng/trang` với cơ chế tự động giới hạn chặn trên thông minh).
+
+---
+
+## Các Tính Năng & Sửa Đổi của Phiên Bản v1.3.6
 
 ### 1. Khắc phục Triệt để Lỗi Phiên Sai Địa Chỉ (Conflict Tỉnh)
 - **Sửa dứt điểm lỗi phiên sai địa chỉ Vĩnh Phúc sang Lai Châu:**

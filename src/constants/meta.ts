@@ -1,8 +1,8 @@
 export const APP_META = {
   name: "VNCare Phiên Địa Chỉ 2 Cấp",
   appCode: "DIACHI",
-  version: "1.3.6",
-  releaseDate: "2026-11-12",
+  version: "1.3.7",
+  releaseDate: "2026-11-22",
   author: "Nguyễn Sơn Nam (Nsnnam / NamNS)",
   githubUrl: "https://github.com/Nsnnam/vncare-diachi-web",
   homeRepo: "Nsnnam/vncare-diachi-web",
@@ -19,6 +19,17 @@ export const APP_META = {
     qrPath: "coffee-qr.jpg",
   },
   changelog: [
+    {
+      version: "1.3.7",
+      date: "2026-11-22",
+      highlights: [
+        "Khắc phục triệt để lỗi xuất file 'Too many properties to enumerate': Tự động chuẩn hóa và làm sạch (sanitizeWorksheet) các sheet bị kéo dài phạm vi ảo lên tới hơn 1 triệu dòng (như sheet BÌA Sân gôn Yên Bái), cắt tỉa vùng ô trống và tính toán lại phạm vi !ref thực tế.",
+        "Tối ưu hiệu năng bộ nhớ khi xuất file Excel: Tối ưu quy trình ghi đè file (exportInplaceFile) và áp dụng định dạng Times New Roman 13pt kẻ ô toàn diện mà không gây tràn bộ nhớ V8 JavaScript engine.",
+        "Hỗ trợ tên sheet có ký tự khoảng trắng thừa: Tự động chuẩn hóa và tìm kiếm mềm tên sheet khi file Excel có dấu cách ở đuôi (ví dụ: 'BÌA Sân gôn Yên Bái ').",
+        "Thanh điều hướng phân trang song hành (Dual Pagination Controls): Bổ sung thanh phân trang và thống kê số dòng ở cả ĐẦU BÁO CÁO và CUỐI BÁO CÁO, đồng bộ trạng thái hai chiều.",
+        "Tùy chỉnh số lượng hồ sơ hiển thị linh hoạt: Đổi mặc định sang 10 dòng/trang, danh sách chọn nhanh 10, 20, 25, 50, 100 dòng/trang kèm ô nhập trực tiếp cho phép người dùng tự điền số lượng mong muốn (từ 1 đến tối đa 100 dòng/trang)."
+      ]
+    },
     {
       version: "1.3.6",
       date: "2026-11-12",

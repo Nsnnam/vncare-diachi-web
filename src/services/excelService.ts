@@ -1,4 +1,5 @@
-import * as XLSX from 'xlsx-js-style';
+import * as _XLSX from 'xlsx-js-style';
+const XLSX: any = (_XLSX as any).default || _XLSX;
 import { ColumnMapping, ProcessedRow, ProcessingMode } from '../types';
 import {
   normalizeText,
@@ -51,6 +52,37 @@ const FONT_DATA = {
   bold: false,
   color: { rgb: '000000' },
 };
+
+/**
+ * Sanitize worksheet range to remove ghost/empty cells extending to 1,048,576 rows.
+ * Prevents "Too many properties to enumerate" error during export.
+ */
+export function sanitizeWorksheet(worksheet: any): void {
+  if (!worksheet || !worksheet['!ref']) return;
+  const rawRef = worksheet['!ref'];
+  const originalRange = XLSX.utils.decode_range(rawRef);
+  let minR = originalRange.s.r;
+  let minC = originalRange.s.c;
+  let maxR = -1;
+  let maxC = -1;
+
+  const cellKeys = Object.keys(worksheet).filter((k) => !k.startsWith('!'));
+  for (const k of cellKeys) {
+    const cell = worksheet[k];
+    if (cell && ((cell.v !== undefined && cell.v !== null && String(cell.v).trim() !== '') || cell.f)) {
+      const decoded = XLSX.utils.decode_cell(k);
+      if (decoded.r > maxR) maxR = decoded.r;
+      if (decoded.c > maxC) maxC = decoded.c;
+    }
+  }
+
+  if (maxR >= 0) {
+    worksheet['!ref'] = XLSX.utils.encode_range({
+      s: { r: Math.min(minR, 0), c: Math.min(minC, 0) },
+      e: { r: maxR, c: Math.max(maxC, originalRange.s.c) },
+    });
+  }
+}
 
 /** Calculate auto-fit column widths */
 function autoFitColumns(sheetData: any[][]): Array<{ wch: number }> {
@@ -106,6 +138,15 @@ function applyTimesNewRomanStyles(
   headerRowIndex: number,
   centerColumns: number[] = [0, 2, 3, 8, 9, 14]
 ): void {
+  // Constrain range to actual sheetData bounds to prevent running through millions of empty ghost rows
+  const maxDataR = Math.max(0, sheetData.length - 1);
+  const maxDataC = sheetData.length > 0 ? Math.max(...sheetData.map((r) => (r ? r.length - 1 : 0))) : 0;
+
+  worksheet['!ref'] = XLSX.utils.encode_range({
+    s: { r: 0, c: 0 },
+    e: { r: maxDataR, c: Math.max(maxDataC, 12) },
+  });
+
   const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:A1');
 
   for (let r = range.s.r; r <= range.e.r; r++) {
@@ -446,6 +487,11 @@ export async function readWorkbook(file: File): Promise<ParsedWorkbookData> {
   const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
 
   const sheetNames = workbook.SheetNames || [];
+  // Sanitize all sheets in workbook to eliminate empty 1-million row bounds
+  for (const s of sheetNames) {
+    sanitizeWorksheet(workbook.Sheets[s]);
+  }
+
   let activeSheet = sheetNames[0] || 'Sheet1';
   for (const s of sheetNames) {
     const n = normalizeText(s);
@@ -479,7 +525,18 @@ export async function readWorkbook(file: File): Promise<ParsedWorkbookData> {
 
 /** Switch active sheet in workbook */
 export function switchSheet(wbData: ParsedWorkbookData, newSheetName: string): ParsedWorkbookData {
-  const worksheet = wbData.workbook.Sheets[newSheetName];
+  let worksheet = wbData.workbook.Sheets[newSheetName];
+  if (!worksheet) {
+    const matched = Object.keys(wbData.workbook.Sheets).find(
+      (k) => k.trim().toLowerCase() === newSheetName.trim().toLowerCase()
+    );
+    if (matched) worksheet = wbData.workbook.Sheets[matched];
+  }
+  if (!worksheet) {
+    worksheet = wbData.workbook.Sheets[wbData.workbook.SheetNames[0]];
+  }
+
+  sanitizeWorksheet(worksheet);
   const rows: any[][] = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
 
   const { headerRowIndex, headers, mapping, isVncare } = detectColumns(rows);
@@ -976,19 +1033,50 @@ export function exportInplaceFile(
     workingWb = XLSX.read(wbData.originalBuffer.slice(0), {
       type: 'array',
       cellDates: true,
-      cellStyles: true,
     });
   } else {
     const rawArr = XLSX.write(wbData.workbook, { bookType: 'xlsx', type: 'array' });
     workingWb = XLSX.read(rawArr, {
       type: 'array',
       cellDates: true,
-      cellStyles: true,
     });
   }
 
-  const sheet = workingWb.Sheets[wbData.activeSheet];
+  // Sanitize all sheets in workingWb to eliminate ghost cells
+  for (const sName of workingWb.SheetNames) {
+    sanitizeWorksheet(workingWb.Sheets[sName]);
+  }
+
+  let actualSheetKey = wbData.activeSheet;
+  let sheet = workingWb.Sheets[actualSheetKey];
+  if (!sheet) {
+    const matched = Object.keys(workingWb.Sheets).find(
+      (k) => k.trim().toLowerCase() === actualSheetKey.trim().toLowerCase()
+    );
+    if (matched) {
+      actualSheetKey = matched;
+      sheet = workingWb.Sheets[matched];
+    }
+  }
+  if (!sheet) {
+    actualSheetKey = workingWb.SheetNames[0];
+    sheet = workingWb.Sheets[actualSheetKey];
+  }
+  sanitizeWorksheet(sheet);
+
   const sheetData: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+  // Safety: Trim trailing empty rows beyond actual needed rows to prevent 1M-row runaway allocation
+  const maxNeededRows = wbData.headerRowIndex + 1 + processedRows.length;
+  let lastNonEmptyRowIdx = sheetData.length - 1;
+  while (lastNonEmptyRowIdx >= maxNeededRows) {
+    const row = sheetData[lastNonEmptyRowIdx];
+    if (row && row.some((c: any) => c !== '' && c !== null && c !== undefined)) {
+      break;
+    }
+    lastNonEmptyRowIdx--;
+  }
+  sheetData.length = Math.max(maxNeededRows, lastNonEmptyRowIdx + 1);
 
   const mapping = options.mapping || wbData.columnMapping;
   let tinhCol = mapping.tinhCol;
@@ -1150,12 +1238,17 @@ export function exportInplaceFile(
     mapping.phoneCol ?? -1,
   ]);
 
-  workingWb.Sheets[wbData.activeSheet] = newSheet;
+  sanitizeWorksheet(newSheet);
+  workingWb.Sheets[actualSheetKey] = newSheet;
+  if (actualSheetKey !== wbData.activeSheet) {
+    workingWb.Sheets[wbData.activeSheet] = newSheet;
+  }
 
   // Clean broken external link formulas (containing '[') across all sheets to prevent Excel XML recovery/corruption errors
   for (const sName of workingWb.SheetNames) {
     const ws = workingWb.Sheets[sName];
     if (!ws) continue;
+    sanitizeWorksheet(ws);
     for (const cellRef in ws) {
       if (cellRef.startsWith('!')) continue;
       const cell = ws[cellRef];

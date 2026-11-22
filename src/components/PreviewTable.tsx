@@ -44,7 +44,8 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
   const [internalFilter, setInternalFilter] = useState<'all' | '3_tier' | '2_tier' | 'custom' | 'unresolved' | 'missing_cccd' | 'missing_ethnicity' | 'missing_nation' | 'unusual_phone' | 'warning'>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [page, setPage] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(25);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [pageSizeInput, setPageSizeInput] = useState<string>('10');
 
   const activeFilter = (selectedFilter as any) || internalFilter;
 
@@ -55,6 +56,29 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
       setInternalFilter(f);
     }
     setPage(1);
+  };
+
+  const updatePageSize = (newSize: number) => {
+    const clamped = Math.min(100, Math.max(1, isNaN(newSize) ? 10 : newSize));
+    setPageSize(clamped);
+    setPageSizeInput(String(clamped));
+    setPage(1);
+  };
+
+  const handlePageSizeInputChange = (val: string) => {
+    setPageSizeInput(val);
+    const num = parseInt(val, 10);
+    if (!isNaN(num) && num >= 1 && num <= 100) {
+      setPageSize(num);
+      setPage(1);
+    }
+  };
+
+  const handlePageSizeInputBlur = () => {
+    let num = parseInt(pageSizeInput, 10);
+    if (isNaN(num) || num < 1) num = 10;
+    if (num > 100) num = 100;
+    updatePageSize(num);
   };
 
   // In-line editing state
@@ -196,6 +220,121 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
 
   const communesForEdit = editTinh ? getCommunesForProvince(editTinh) : [];
 
+  /**
+   * Reusable Pagination Bar with full count, pageSize select, custom input, and navigation buttons.
+   * Rendered at BOTH Top and Bottom of the report.
+   */
+  const renderPaginationBar = (position: 'top' | 'bottom') => (
+    <div
+      className={`p-3 sm:px-4 flex flex-col lg:flex-row items-center justify-between text-xs text-slate-600 gap-3 bg-slate-50/85 transition-colors ${
+        position === 'top' ? 'border-b border-slate-200' : 'border-t border-slate-200'
+      }`}
+    >
+      {/* 1. Summary text */}
+      <div className="flex items-center space-x-1.5 shrink-0">
+        <span className="font-medium text-slate-600">
+          Đang xem{' '}
+          <strong className="text-slate-900 font-bold font-mono">
+            {filteredRows.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}
+          </strong>{' '}
+          -{' '}
+          <strong className="text-slate-900 font-bold font-mono">
+            {Math.min(currentPage * pageSize, filteredRows.length)}
+          </strong>{' '}
+          trên tổng số{' '}
+          <strong className="text-slate-900 font-bold font-mono">{filteredRows.length}</strong> dòng
+        </span>
+        {filteredRows.length < rows.length && (
+          <span className="text-[11px] text-slate-400 hidden sm:inline">
+            (tổng nạp: {rows.length})
+          </span>
+        )}
+      </div>
+
+      {/* 2. Page Size Dropdown + Custom Direct Input (Default 10, Max 100) */}
+      <div className="flex flex-wrap items-center justify-center gap-2 shrink-0">
+        <span className="text-slate-500 font-medium">Số hồ sơ hiển thị:</span>
+        <select
+          value={[10, 20, 25, 50, 100].includes(pageSize) ? pageSize : 'custom'}
+          onChange={(e) => {
+            if (e.target.value !== 'custom') {
+              updatePageSize(Number(e.target.value));
+            }
+          }}
+          className="text-xs py-1.5 px-2 border border-slate-300 rounded-lg bg-white font-medium text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-sky-500 cursor-pointer shadow-2xs"
+          title="Chọn số lượng dòng hiển thị trên một trang"
+        >
+          <option value={10}>10 dòng/trang (Mặc định)</option>
+          <option value={20}>20 dòng/trang</option>
+          <option value={25}>25 dòng/trang</option>
+          <option value={50}>50 dòng/trang</option>
+          <option value={100}>100 dòng/trang (Tối đa)</option>
+          {![10, 20, 25, 50, 100].includes(pageSize) && (
+            <option value="custom">Tùy chỉnh: {pageSize} dòng</option>
+          )}
+        </select>
+
+        {/* Custom Input for arbitrary page size (1 - 100) */}
+        <div className="flex items-center space-x-1" title="Tùy chọn tự điền số lượng hồ sơ (từ 1 đến tối đa 100 dòng/trang)">
+          <span className="text-slate-400 text-[11px]">hoặc tự điền:</span>
+          <input
+            type="number"
+            min={1}
+            max={100}
+            value={pageSizeInput}
+            onChange={(e) => handlePageSizeInputChange(e.target.value)}
+            onBlur={handlePageSizeInputBlur}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handlePageSizeInputBlur();
+            }}
+            placeholder="10"
+            className="w-14 text-xs font-mono font-bold text-center py-1.5 px-1 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-sky-500 shadow-2xs"
+          />
+          <span className="text-[11px] text-slate-400 font-medium">(tối đa 100)</span>
+        </div>
+      </div>
+
+      {/* 3. Pagination navigation buttons */}
+      <div className="flex items-center space-x-1 shrink-0">
+        <button
+          onClick={() => setPage(1)}
+          disabled={currentPage <= 1}
+          className="px-2.5 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-medium transition-colors text-slate-700 shadow-2xs"
+          title="Về trang đầu tiên"
+        >
+          Đầu
+        </button>
+        <button
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={currentPage <= 1}
+          className="px-2.5 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-medium transition-colors text-slate-700 shadow-2xs"
+          title="Trang trước"
+        >
+          Trước
+        </button>
+        <div className="px-2.5 py-1 font-semibold text-slate-800 bg-white border border-slate-200 rounded-lg font-mono shadow-2xs">
+          Trang {currentPage} / {totalPages}
+        </div>
+        <button
+          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          disabled={currentPage >= totalPages}
+          className="px-2.5 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-medium transition-colors text-slate-700 shadow-2xs"
+          title="Trang sau"
+        >
+          Sau
+        </button>
+        <button
+          onClick={() => setPage(totalPages)}
+          disabled={currentPage >= totalPages}
+          className="px-2.5 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-medium transition-colors text-slate-700 shadow-2xs"
+          title="Đến trang cuối cùng"
+        >
+          Cuối
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
       {/* Reconciliation Title & Controls Bar */}
@@ -211,7 +350,7 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
             </p>
           </div>
 
-          {/* Search & page size input */}
+          {/* Search box in header */}
           <div className="flex items-center space-x-2 shrink-0">
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -220,19 +359,9 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
                 placeholder="Tìm tên, CCCD, địa chỉ..."
-                className="pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white w-48 sm:w-60 focus:outline-hidden focus:ring-2 focus:ring-sky-500"
+                className="pl-8 pr-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white w-52 sm:w-64 focus:outline-hidden focus:ring-2 focus:ring-sky-500 shadow-2xs"
               />
             </div>
-
-            <select
-              value={pageSize}
-              onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
-              className="text-xs py-1.5 px-2 border border-slate-300 rounded-lg bg-white"
-            >
-              <option value={25}>25 dòng/trang</option>
-              <option value={50}>50 dòng/trang</option>
-              <option value={100}>100 dòng/trang</option>
-            </select>
           </div>
         </div>
 
@@ -368,6 +497,11 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
           )}
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* TOP PAGINATION & PAGE SIZE CONTROLS (Ở ĐẦU BÁO CÁO) */}
+      {/* ========================================================================= */}
+      {renderPaginationBar('top')}
 
       {/* Comparison Table */}
       <div className="overflow-x-auto">
@@ -760,48 +894,10 @@ export const PreviewTable: React.FC<PreviewTableProps> = ({
         </table>
       </div>
 
-      {/* Pagination Footer */}
-      <div className="p-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2 bg-slate-50/60">
-        <div>
-          Đang xem <strong>{filteredRows.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}</strong> -{' '}
-          <strong>{Math.min(currentPage * pageSize, filteredRows.length)}</strong> trên tổng số{' '}
-          <strong>{filteredRows.length}</strong> dòng đối chiếu
-        </div>
-
-        <div className="flex items-center space-x-1">
-          <button
-            onClick={() => setPage(1)}
-            disabled={currentPage <= 1}
-            className="px-2 py-1 border border-slate-200 rounded bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Đầu
-          </button>
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage <= 1}
-            className="px-2.5 py-1 border border-slate-200 rounded bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Trước
-          </button>
-          <span className="px-2 font-medium text-slate-700">
-            Trang {currentPage} / {totalPages}
-          </span>
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={currentPage >= totalPages}
-            className="px-2.5 py-1 border border-slate-200 rounded bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Sau
-          </button>
-          <button
-            onClick={() => setPage(totalPages)}
-            disabled={currentPage >= totalPages}
-            className="px-2 py-1 border border-slate-200 rounded bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Cuối
-          </button>
-        </div>
-      </div>
+      {/* ========================================================================= */}
+      {/* BOTTOM PAGINATION & PAGE SIZE CONTROLS (Ở CUỐI BÁO CÁO) */}
+      {/* ========================================================================= */}
+      {renderPaginationBar('bottom')}
     </div>
   );
 };

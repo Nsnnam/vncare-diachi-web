@@ -2,6 +2,23 @@
 
 Toàn bộ các thay đổi của dự án **VNCare Phiên Địa Chỉ 2 Cấp** được ghi nhận tại đây theo chuẩn [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.3.7] - 2026-11-22
+
+### Khắc phục Triệt để Lỗi "Too many properties to enumerate" & Nâng cấp Thanh Phân Trang Song Hành
+- **Khắc phục triệt để lỗi xuất file 'Too many properties to enumerate':**
+  - Tự động nhận diện và làm sạch (`sanitizeWorksheet`) các sheet bị kéo dài phạm vi ảo lên tới hơn 1.048.566 dòng (ví dụ sheet `BÌA Sân gôn Yên Bái ` trong file `Ds NHÂN VIÊN Sân Gôn Ngôi Sao Yên Bái.xlsx`).
+  - Cắt tỉa các vùng ô trống ảo và tính toán lại phạm vi `!ref` thực tế của bảng tính (thu gọn từ hơn 1 triệu dòng về đúng số dòng thực tế).
+  - Tối ưu hóa quy trình ghi đè file (`exportInplaceFile`) và định dạng Times New Roman 13pt kẻ viền ô toàn diện không bị nghẽn RAM/tràn V8 memory.
+  - Tự động trim khoảng trắng thừa trong tên Sheet khi chuyển đổi/tìm kiếm sheet.
+- **Thanh điều hướng phân trang song hành (Dual Pagination Controls):**
+  - Hiển thị đầy đủ thanh điều hướng phân trang và đếm dòng ở cả **ĐẦU BÁO CÁO** và **CUỐI BÁO CÁO**.
+  - Hiển thị thống kê: *"Đang xem X - Y trên tổng số Z dòng (tổng nạp: N dòng)"*.
+  - Bộ nút chuyển trang `[Đầu]`, `[Trước]`, `[Trang X / Y]`, `[Sau]`, `[Cuối]` đồng bộ 2 chiều.
+- **Tùy chỉnh số lượng hồ sơ hiển thị linh hoạt:**
+  - Thay đổi số lượng dòng mặc định từ 25 xuống **10 dòng/trang**.
+  - Danh sách chọn nhanh: 10, 20, 25, 50, 100 dòng/trang.
+  - Ô nhập trực tiếp: Cho phép người dùng tự điền số lượng hồ sơ hiển thị tùy ý từ 1 đến tối đa 100 dòng/trang (có kiểm soát chặn trên 100).
+
 ## [1.3.6] - 2026-11-12
 
 ### Khắc phục Triệt để Lỗi Phiên Sai Địa Chỉ (Conflict Tỉnh) & Tái Thiết Kế Toàn Diện UI Báo Cáo
